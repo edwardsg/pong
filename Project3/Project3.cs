@@ -6,7 +6,7 @@ namespace Project3
     /// <summary>
     /// The main class.
     /// </summary>
-    public static class Program
+    public static class Project3
     {
         /// <summary>
         /// The main entry point for the application.
@@ -14,7 +14,7 @@ namespace Project3
         [STAThread]
         static void Main()
         {
-            using (var game = new Game1())
+            using (var game = new Pong())
                 game.Run();
         }
     }
