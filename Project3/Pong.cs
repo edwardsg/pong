@@ -207,6 +207,20 @@ namespace Project3
                 graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 12);
             }
 
+            paddleWorld = Matrix.CreateScale(new Vector3(2, 2, 0.25f));
+
+            foreach (EffectPass pass in baseEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                baseEffect.World = paddleWorld;
+                baseEffect.View = view;
+                baseEffect.Projection = projection;
+                baseEffect.EnableDefaultLighting();
+                baseEffect.DiffuseColor = new Vector3(0, 1, 0);
+
+                graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 12);
+            }
+
             base.Draw(gameTime);
 		}
 	}
