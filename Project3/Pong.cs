@@ -25,7 +25,8 @@ namespace Project3
 		float nearPlane = .01f;
 		float farPlane = 500;
 
-		float cameraRotation = 0;
+		float cameraRotationY = 0;
+		float cameraRotationX = 0;
 
 		VertexPositionNormalTexture[] baseCube;
         VertexBuffer vertexBuffer;
@@ -165,13 +166,21 @@ namespace Project3
 
 			float milliseconds = gameTime.ElapsedGameTime.Milliseconds;
 
-			// Camera rotation - A and D
-			if (keyboard.IsKeyDown(Keys.Left))
-				cameraRotation = -cameraRotateSpeed * milliseconds;
-			else if (keyboard.IsKeyDown(Keys.Right))
-				cameraRotation = cameraRotateSpeed * milliseconds;
+			// Camera Y rotation - A and D
+			if (keyboard.IsKeyDown(Keys.A))
+				cameraRotationY = -cameraRotateSpeed * milliseconds;
+			else if (keyboard.IsKeyDown(Keys.D))
+				cameraRotationY = cameraRotateSpeed * milliseconds;
 			else
-				cameraRotation = 0;
+				cameraRotationY = 0;
+
+			// Camera X rotation - W and S
+			if (keyboard.IsKeyDown(Keys.W))
+				cameraRotationX = -cameraRotateSpeed * milliseconds;
+			else if (keyboard.IsKeyDown(Keys.S))
+				cameraRotationX = cameraRotateSpeed * milliseconds;
+			else
+				cameraRotationX = 0;
 
 			base.Update(gameTime);
 		}
@@ -183,12 +192,13 @@ namespace Project3
 		protected override void Draw(GameTime gameTime)
 		{
 			// Rotate camera around origin
-			Matrix cameraRotateY = Matrix.CreateRotationY(cameraRotation);
-			cameraPosition = Vector3.Transform(cameraPosition, cameraRotateY);
+			Matrix rotation = Matrix.CreateRotationY(cameraRotationY) * Matrix.CreateRotationX(cameraRotationX);
+			Vector3 cameraUp = Vector3.Transform(Vector3.Up, rotation);
+			cameraPosition = Vector3.Transform(cameraPosition, rotation);
 
 			// Set up scale, camera direction, and perspective projection
 			Matrix world = Matrix.CreateScale(100) * Matrix.CreateRotationX(-MathHelper.PiOver2);
-			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
+			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, cameraUp);
 			Matrix projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
