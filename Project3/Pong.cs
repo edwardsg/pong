@@ -32,6 +32,9 @@ namespace Project3
         VertexPositionNormalTexture[] baseCube;
         VertexBuffer vertexBuffer;
 
+        Effect effect;
+        TextureCube skyboxTexture;
+
 		public Pong()
 		{
 			graphics = new GraphicsDeviceManager(this);
@@ -70,6 +73,9 @@ namespace Project3
 		{
 			// Create a new SpriteBatch, which can be used to draw textures.
 			spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            effect = Content.Load<Effect>("skybox");
+            skyboxTexture = Content.Load<TextureCube>("SkyBoxTexture");
 
             //calculated normals for the cubes
             Vector3 frontNormal = new Vector3(0, 0, 1);
@@ -178,13 +184,27 @@ namespace Project3
 			cameraPosition = Vector3.Transform(cameraPosition, eulerTransform);
 
 			// Set up scale, camera direction, and perspective projection
-			Matrix world = Matrix.CreateRotationX(-MathHelper.PiOver2);
+			Matrix world = Matrix.CreateScale(100) * Matrix.CreateRotationX(-MathHelper.PiOver2);
 			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
 			Matrix projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.SetVertexBuffer(vertexBuffer);
+            GraphicsDevice.RasterizerState = RasterizerState.CullNone;
 
-			base.Draw(gameTime);
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                effect.Parameters["World"].SetValue(world * Matrix.CreateTranslation(cameraPosition));
+                effect.Parameters["View"].SetValue(view);
+                effect.Parameters["Projection"].SetValue(projection);
+                effect.Parameters["CameraPosition"].SetValue(cameraPosition);
+                effect.Parameters["SkyBoxTexture"].SetValue(skyboxTexture);
+
+                graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 12);
+            }
+
+            base.Draw(gameTime);
 		}
 	}
 }
