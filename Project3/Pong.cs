@@ -12,6 +12,23 @@ namespace Project3
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
 
+		// Window size
+		int windowWidth = 1600;
+		int windowHeight = 800;
+
+		// Camera starting position, rotation speed
+		Vector3 cameraPosition = new Vector3(50, 0, 0);
+		float cameraRotateSpeed = 0.02f;
+
+		// Projection
+		float viewAngle = .9f;
+		float nearPlane = .01f;
+		float farPlane = 500;
+
+		float cameraYaw = 0;
+		float cameraPitch = 0;
+		float cameraRoll = 0;
+
         VertexPositionNormalTexture[] baseCube;
         VertexBuffer vertexBuffer;
 
@@ -29,7 +46,18 @@ namespace Project3
 		/// </summary>
 		protected override void Initialize()
 		{
-			// TODO: Add your initialization logic here
+			// Set window position
+			int screenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+			int screenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+			Window.Position = new Point(screenWidth / 2 - windowWidth / 2, screenHeight / 2 - windowHeight / 2);
+
+			// Set window size
+			graphics.PreferredBackBufferWidth = windowWidth;
+			graphics.PreferredBackBufferHeight = windowHeight;
+			graphics.ApplyChanges();
+
+			// Set window title
+			Window.Title = "Space Cadet 3D Ping Pxong";
 
 			base.Initialize();
 		}
@@ -114,7 +142,7 @@ namespace Project3
 		/// </summary>
 		protected override void UnloadContent()
 		{
-			// TODO: Unload any non ContentManager content here
+			vertexBuffer.Dispose();
 		}
 
 		/// <summary>
@@ -127,7 +155,16 @@ namespace Project3
 			if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
 				Exit();
 
-			// TODO: Add your update logic here
+			// Camera rotation - WASD keys
+			if (Keyboard.GetState().IsKeyDown(Keys.A))
+				cameraYaw += cameraRotateSpeed;
+			else if (Keyboard.GetState().IsKeyDown(Keys.D))
+				cameraYaw -= cameraRotateSpeed;
+
+			if (Keyboard.GetState().IsKeyDown(Keys.W))
+				cameraPitch += cameraRotateSpeed;
+			else if (Keyboard.GetState().IsKeyDown(Keys.S))
+				cameraPitch -= cameraRotateSpeed;
 
 			base.Update(gameTime);
 		}
@@ -138,9 +175,16 @@ namespace Project3
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Draw(GameTime gameTime)
 		{
-			GraphicsDevice.Clear(Color.CornflowerBlue);
+			// Create new vectors for the camera's direction based on reference directions and the yaw, pitch, and roll
+			Matrix eulerTransform = Matrix.CreateFromYawPitchRoll(cameraYaw, cameraPitch, cameraRoll);
+			cameraPosition = Vector3.Transform(cameraPosition, eulerTransform);
 
-			// TODO: Add your drawing code here
+			// Set up scale, camera direction, and perspective projection
+			Matrix world = Matrix.CreateRotationX(-MathHelper.PiOver2);
+			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
+			Matrix projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
+
+			GraphicsDevice.Clear(Color.CornflowerBlue);
 
 			base.Draw(gameTime);
 		}
