@@ -15,6 +15,13 @@ namespace Project3
         VertexPositionNormalTexture[] baseCube;
         VertexBuffer vertexBuffer;
 
+        Effect skyboxEffect;
+        TextureCube skyboxTexture;
+
+        Matrix world;
+        Matrix view;
+        Matrix projection;
+
 		public Pong()
 		{
 			graphics = new GraphicsDeviceManager(this);
@@ -42,6 +49,11 @@ namespace Project3
 		{
 			// Create a new SpriteBatch, which can be used to draw textures.
 			spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            view = Matrix.CreateLookAt(new Vector3(0, 0, 0), new Vector3(0, 0, 0), Vector3.UnitY);
+            projection = Matrix.CreatePerspectiveFieldOfView(0.9f, (float)GraphicsDevice.Viewport.Width / GraphicsDevice.Viewport.Height, 0.1f, 1000.0f);
+            skyboxTexture = Content.Load<TextureCube>("SkyBoxTexture");
+            skyboxEffect = Content.Load<Effect>("skybox");
 
             //calculated normals for the cubes
             Vector3 frontNormal = new Vector3(0, 0, 1);
@@ -140,9 +152,26 @@ namespace Project3
 		{
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
-			// TODO: Add your drawing code here
+            // TODO: Add your drawing code here
 
-			base.Draw(gameTime);
+            world = Matrix.CreateScale(10);
+
+            GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+            GraphicsDevice.SetVertexBuffer(vertexBuffer);
+
+            foreach (EffectPass pass in skyboxEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                skyboxEffect.Parameters["World"].SetValue(world);
+                skyboxEffect.Parameters["View"].SetValue(view);
+                skyboxEffect.Parameters["Projection"].SetValue(projection);
+                skyboxEffect.Parameters["CameraPosition"].SetValue(new Vector3(0, 0, 10));
+                skyboxEffect.Parameters["SkyBoxTexture"].SetValue(skyboxTexture);
+
+                graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 12);
+            }
+
+            base.Draw(gameTime);
 		}
 	}
 }
