@@ -13,8 +13,8 @@ namespace Project3
 		SpriteBatch spriteBatch;
 
 		// Window size
-		int windowWidth = 1600;
-		int windowHeight = 800;
+		int windowWidth = 800; //1600
+		int windowHeight = 500; //800
 
 		// Camera starting position, rotation speed
 		Vector3 cameraPosition = new Vector3(50, 0, 0);
@@ -33,7 +33,10 @@ namespace Project3
         VertexBuffer vertexBuffer;
 
         Effect effect;
+        BasicEffect baseEffect;
         TextureCube skyboxTexture;
+
+        Matrix paddleWorld;
 
 		public Pong()
 		{
@@ -75,6 +78,7 @@ namespace Project3
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 
             effect = Content.Load<Effect>("skybox");
+            baseEffect = new BasicEffect(GraphicsDevice);
             skyboxTexture = Content.Load<TextureCube>("SkyBoxTexture");
 
             //calculated normals for the cubes
