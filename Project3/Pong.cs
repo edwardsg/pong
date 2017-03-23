@@ -77,7 +77,7 @@ namespace Project3
 
             effect = Content.Load<Effect>("skybox");
             baseEffect = new BasicEffect(GraphicsDevice);
-            skyboxTexture = Content.Load<TextureCube>("SkyBoxTexture");
+            skyboxTexture = Content.Load<TextureCube>("Islands");
 
             //calculated normals for the cubes
             Vector3 frontNormal = new Vector3(0, 0, 1);
