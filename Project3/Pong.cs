@@ -17,19 +17,17 @@ namespace Project3
 		int windowHeight = 800;
 
 		// Camera starting position, rotation speed
-		Vector3 cameraPosition = new Vector3(50, 0, 0);
-		float cameraRotateSpeed = 0.02f;
+		Vector3 cameraPosition = new Vector3(0, 0, 50);
+		float cameraRotateSpeed = 0.005f;
 
 		// Projection
 		float viewAngle = .9f;
 		float nearPlane = .01f;
 		float farPlane = 500;
 
-		float cameraYaw = 0;
-		float cameraPitch = 0;
-		float cameraRoll = 0;
+		float cameraRotation = 0;
 
-        VertexPositionNormalTexture[] baseCube;
+		VertexPositionNormalTexture[] baseCube;
         VertexBuffer vertexBuffer;
 
         Effect effect;
@@ -156,19 +154,20 @@ namespace Project3
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Update(GameTime gameTime)
 		{
-			if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+			KeyboardState keyboard = Keyboard.GetState();
+
+			if (keyboard.IsKeyDown(Keys.Escape))
 				Exit();
 
-			// Camera rotation - WASD keys
-			if (Keyboard.GetState().IsKeyDown(Keys.A))
-				cameraYaw += cameraRotateSpeed;
-			else if (Keyboard.GetState().IsKeyDown(Keys.D))
-				cameraYaw -= cameraRotateSpeed;
+			float milliseconds = gameTime.ElapsedGameTime.Milliseconds;
 
-			if (Keyboard.GetState().IsKeyDown(Keys.W))
-				cameraPitch += cameraRotateSpeed;
-			else if (Keyboard.GetState().IsKeyDown(Keys.S))
-				cameraPitch -= cameraRotateSpeed;
+			// Camera rotation - A and D
+			if (keyboard.IsKeyDown(Keys.Left))
+				cameraRotation = -cameraRotateSpeed * milliseconds;
+			else if (keyboard.IsKeyDown(Keys.Right))
+				cameraRotation = cameraRotateSpeed * milliseconds;
+			else
+				cameraRotation = 0;
 
 			base.Update(gameTime);
 		}
@@ -179,9 +178,9 @@ namespace Project3
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Draw(GameTime gameTime)
 		{
-			// Create new vectors for the camera's direction based on reference directions and the yaw, pitch, and roll
-			Matrix eulerTransform = Matrix.CreateFromYawPitchRoll(cameraYaw, cameraPitch, cameraRoll);
-			cameraPosition = Vector3.Transform(cameraPosition, eulerTransform);
+			// Rotate camera around origin
+			Matrix cameraRotateY = Matrix.CreateRotationY(cameraRotation);
+			cameraPosition = Vector3.Transform(cameraPosition, cameraRotateY);
 
 			// Set up scale, camera direction, and perspective projection
 			Matrix world = Matrix.CreateScale(100) * Matrix.CreateRotationX(-MathHelper.PiOver2);
