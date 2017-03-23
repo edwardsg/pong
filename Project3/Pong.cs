@@ -132,8 +132,6 @@ namespace Project3
             //fill vertex buffer for the sky box
             vertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionNormalTexture), 36, BufferUsage.WriteOnly);
             vertexBuffer.SetData<VertexPositionNormalTexture>(baseCube);
-
-            // TODO: use this.Content to load your game content here
         }
 
 		/// <summary>
