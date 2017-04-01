@@ -13,23 +13,27 @@ namespace Project3
 		SpriteBatch spriteBatch;
 
 		// Window size
-		int windowWidth = 800; //1600
-		int windowHeight = 500; //800
+		private const int windowWidth = 800; //1600
+		private const int windowHeight = 500; //800
 
-		// Camera starting position, rotation speed
-		Vector3 cameraPosition = new Vector3(0, 0, 50);
-		float cameraRotateSpeed = 0.005f;
+		// Camera distance from origin, rotation speed
+		private const float cameraDistance = 50;
+		private const float cameraRotateSpeed = 0.002f;
 
 		// Projection
-		float viewAngle = .9f;
-		float nearPlane = .01f;
-		float farPlane = 500;
+		private const float viewAngle = .9f;
+		private const float nearPlane = .01f;
+		private const float farPlane = 500;
 
-		float cameraRotationY = 0;
-		float cameraRotationX = 0;
+		private Vector3 cameraPosition;
+		private float cameraYaw = 0;
+		private float cameraPitch = 0;
+		public float minPitch = -MathHelper.PiOver2 + 0.3f;
+		public float maxPitch = MathHelper.PiOver2 - 0.3f;
 
 		VertexPositionNormalTexture[] baseCube;
         VertexBuffer vertexBuffer;
+		IndexBuffer indexBuffer;
 
         Effect effect;
         BasicEffect baseEffect;
@@ -80,68 +84,57 @@ namespace Project3
             baseEffect = new BasicEffect(GraphicsDevice);
             skyboxTexture = Content.Load<TextureCube>("SkyBoxTexture");
 
-            //calculated normals for the cubes
-            Vector3 frontNormal = new Vector3(0, 0, 1);
-            Vector3 backNormal = new Vector3(0, 0, -1);
-            Vector3 topNormal = new Vector3(0, 1, 0);
-            Vector3 bottomNormal = new Vector3(0, -1, 0);
-            Vector3 leftNormal = new Vector3(-1, 0, 0);
-            Vector3 rightNormal = new Vector3(1, 0, 0);
+			// Cube data - four vertices for each face, put into index buffer as 12 triangles
+			VertexPositionNormalTexture[] cubeVertices = new VertexPositionNormalTexture[24]
+			{
+				new VertexPositionNormalTexture(new Vector3(1, 1, 1), Vector3.UnitX, new Vector2(0, 0)),
+				new VertexPositionNormalTexture(new Vector3(1, 1, -1), Vector3.UnitX, new Vector2(1, 0)),
+				new VertexPositionNormalTexture(new Vector3(1, -1, -1), Vector3.UnitX, new Vector2(1, 1)),
+				new VertexPositionNormalTexture(new Vector3(1, -1, 1), Vector3.UnitX, new Vector2(0, 1)),
 
-            baseCube = new VertexPositionNormalTexture[36] {
-                //front face
-                new VertexPositionNormalTexture(new Vector3(-1f, -1f, 1f), frontNormal, new Vector2(0, 1)),
-                new VertexPositionNormalTexture(new Vector3(-1f, 1f, 1f), frontNormal, new Vector2(0, 0)),
-                new VertexPositionNormalTexture(new Vector3(1f, 1f, 1f), frontNormal, new Vector2(1, 0)),
-                new VertexPositionNormalTexture(new Vector3(-1f, -1f, 1f), frontNormal, new Vector2(0, 1)),
-                new VertexPositionNormalTexture(new Vector3(1f, 1f, 1f), frontNormal, new Vector2(1, 0)),
-                new VertexPositionNormalTexture(new Vector3(1f, -1f, 1f), frontNormal, new Vector2(1, 1)),
+				new VertexPositionNormalTexture(new Vector3(-1, 1, -1), Vector3.UnitY, new Vector2(0, 0)),
+				new VertexPositionNormalTexture(new Vector3(1, 1, -1), Vector3.UnitY, new Vector2(1, 0)),
+				new VertexPositionNormalTexture(new Vector3(1, 1, 1), Vector3.UnitY, new Vector2(1, 1)),
+				new VertexPositionNormalTexture(new Vector3(-1, 1, 1), Vector3.UnitY, new Vector2(0, 1)),
 
-                //back face
-                new VertexPositionNormalTexture(new Vector3(-1f, -1f, -1f), backNormal, new Vector2(1, 1)),
-                new VertexPositionNormalTexture(new Vector3(1f, -1f, -1f), backNormal, new Vector2(0, 1)),
-                new VertexPositionNormalTexture(new Vector3(1f, 1f, -1f), backNormal, new Vector2(0, 0)),
-                new VertexPositionNormalTexture(new Vector3(-1f, -1f, -1f), backNormal, new Vector2(1, 1)),
-                new VertexPositionNormalTexture(new Vector3(1f, 1f, -1f), backNormal, new Vector2(0, 0)),
-                new VertexPositionNormalTexture(new Vector3(-1f, 1f, -1f), backNormal, new Vector2(1, 0)),
+				new VertexPositionNormalTexture(new Vector3(-1, 1, 1), Vector3.UnitZ, new Vector2(0, 0)),
+				new VertexPositionNormalTexture(new Vector3(1, 1, 1), Vector3.UnitZ, new Vector2(1, 0)),
+				new VertexPositionNormalTexture(new Vector3(1, -1, 1), Vector3.UnitZ, new Vector2(1, 1)),
+				new VertexPositionNormalTexture(new Vector3(-1, -1, 1), Vector3.UnitZ, new Vector2(0, 1)),
 
-                //top face
-                new VertexPositionNormalTexture(new Vector3(-1f, 1f, 1f), topNormal, new Vector2(0, 1)),
-                new VertexPositionNormalTexture(new Vector3(-1f, 1f, -1f), topNormal, new Vector2(0, 0)),
-                new VertexPositionNormalTexture(new Vector3(1f, 1f, -1f), topNormal, new Vector2(1, 0)),
-                new VertexPositionNormalTexture(new Vector3(-1f, 1f, 1f), topNormal, new Vector2(0, 1)),
-                new VertexPositionNormalTexture(new Vector3(1f, 1f, -1f), topNormal, new Vector2(1, 0)),
-                new VertexPositionNormalTexture(new Vector3(1f, 1f, 1f), topNormal, new Vector2(1, 1)),
+				new VertexPositionNormalTexture(new Vector3(-1, 1, -1), -Vector3.UnitX, new Vector2(0, 0)),
+				new VertexPositionNormalTexture(new Vector3(-1, 1, 1), -Vector3.UnitX, new Vector2(1, 0)),
+				new VertexPositionNormalTexture(new Vector3(-1, -1, 1), -Vector3.UnitX, new Vector2(1, 1)),
+				new VertexPositionNormalTexture(new Vector3(-1, -1, -1), -Vector3.UnitX, new Vector2(0, 1)),
 
-                //bottom face
-                new VertexPositionNormalTexture(new Vector3(-1f, -1f, -1f), bottomNormal, new Vector2(0, 1)),
-                new VertexPositionNormalTexture(new Vector3(-1f, -1f, 1f), bottomNormal, new Vector2(0, 0)),
-                new VertexPositionNormalTexture(new Vector3(1f, -1f, 1f), bottomNormal, new Vector2(1, 0)),
-                new VertexPositionNormalTexture(new Vector3(-1f, -1f, -1f), bottomNormal, new Vector2(0, 1)),
-                new VertexPositionNormalTexture(new Vector3(1f, -1f, 1f), bottomNormal, new Vector2(1, 0)),
-                new VertexPositionNormalTexture(new Vector3(1f, -1f, -1f), bottomNormal, new Vector2(1, 1)),
+				new VertexPositionNormalTexture(new Vector3(-1, -1, 1), -Vector3.UnitY, new Vector2(0, 0)),
+				new VertexPositionNormalTexture(new Vector3(1, -1, 1), -Vector3.UnitY, new Vector2(1, 0)),
+				new VertexPositionNormalTexture(new Vector3(1, -1, -1), -Vector3.UnitY, new Vector2(1, 1)),
+				new VertexPositionNormalTexture(new Vector3(-1, -1, -1), -Vector3.UnitY, new Vector2(0, 1)),
 
-                //left face
-                new VertexPositionNormalTexture(new Vector3(-1f, -1f, -1f), leftNormal, new Vector2(0, 1)),
-                new VertexPositionNormalTexture(new Vector3(-1f, 1f, -1f), leftNormal, new Vector2(0, 0)),
-                new VertexPositionNormalTexture(new Vector3(-1f, 1f, 1f), leftNormal, new Vector2(1, 0)),
-                new VertexPositionNormalTexture(new Vector3(-1f, -1f, -1f), leftNormal, new Vector2(0, 1)),
-                new VertexPositionNormalTexture(new Vector3(-1f, 1f, 1f), leftNormal, new Vector2(1, 0)),
-                new VertexPositionNormalTexture(new Vector3(-1f, -1f, 1f), leftNormal, new Vector2(1, 1)),
+				new VertexPositionNormalTexture(new Vector3(1, 1, -1), -Vector3.UnitZ, new Vector2(0, 0)),
+				new VertexPositionNormalTexture(new Vector3(-1, 1, -1), -Vector3.UnitZ, new Vector2(1, 0)),
+				new VertexPositionNormalTexture(new Vector3(-1, -1, -1), -Vector3.UnitZ, new Vector2(1, 1)),
+				new VertexPositionNormalTexture(new Vector3(1, -1, -1), -Vector3.UnitZ, new Vector2(0, 1))
+			};
 
-                //right face
-                new VertexPositionNormalTexture(new Vector3(1f, -1f, 1f), rightNormal, new Vector2(0, 1)),
-                new VertexPositionNormalTexture(new Vector3(1f, 1f, 1f), rightNormal, new Vector2(0, 0)),
-                new VertexPositionNormalTexture(new Vector3(1f, 1f, -1f), rightNormal, new Vector2(1, 0)),
-                new VertexPositionNormalTexture(new Vector3(1f, -1f, 1f), rightNormal, new Vector2(0, 1)),
-                new VertexPositionNormalTexture(new Vector3(1f, 1f, -1f), rightNormal, new Vector2(1, 0)),
-                new VertexPositionNormalTexture(new Vector3(1f, -1f, -1f), rightNormal, new Vector2(1, 1)),
-            };
+			vertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionNormalTexture), cubeVertices.Length, BufferUsage.WriteOnly);
+			vertexBuffer.SetData<VertexPositionNormalTexture>(cubeVertices);
 
-            //fill vertex buffer for the sky box
-            vertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionNormalTexture), 36, BufferUsage.WriteOnly);
-            vertexBuffer.SetData<VertexPositionNormalTexture>(baseCube);
-        }
+			short[] cubeIndices = new short[36]
+			{
+				0, 1, 3, 2, 3, 1,
+				4, 5, 7, 6, 7, 5,
+				8, 9, 11, 10, 11, 9,
+				12, 13, 15, 14, 15, 13,
+				16, 17, 19, 18, 19, 17,
+				20, 21, 23, 22, 23, 21
+			};
+
+			indexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), cubeIndices.Length, BufferUsage.WriteOnly);
+			indexBuffer.SetData<short>(cubeIndices);
+
+		}
 
 		/// <summary>
 		/// UnloadContent will be called once per game and is the place to unload
@@ -168,19 +161,15 @@ namespace Project3
 
 			// Camera Y rotation - A and D
 			if (keyboard.IsKeyDown(Keys.A))
-				cameraRotationY = -cameraRotateSpeed * milliseconds;
+				cameraYaw -= cameraRotateSpeed * milliseconds;
 			else if (keyboard.IsKeyDown(Keys.D))
-				cameraRotationY = cameraRotateSpeed * milliseconds;
-			else
-				cameraRotationY = 0;
+				cameraYaw += cameraRotateSpeed * milliseconds;
 
 			// Camera X rotation - W and S
-			if (keyboard.IsKeyDown(Keys.W))
-				cameraRotationX = -cameraRotateSpeed * milliseconds;
-			else if (keyboard.IsKeyDown(Keys.S))
-				cameraRotationX = cameraRotateSpeed * milliseconds;
-			else
-				cameraRotationX = 0;
+			if (keyboard.IsKeyDown(Keys.W) && cameraPitch > minPitch)
+				cameraPitch -= cameraRotateSpeed * milliseconds;
+			else if (keyboard.IsKeyDown(Keys.S) && cameraPitch < maxPitch)
+				cameraPitch += cameraRotateSpeed * milliseconds;
 
 			base.Update(gameTime);
 		}
@@ -192,18 +181,20 @@ namespace Project3
 		protected override void Draw(GameTime gameTime)
 		{
 			// Rotate camera around origin
-			Matrix rotation = Matrix.CreateRotationY(cameraRotationY) * Matrix.CreateRotationX(cameraRotationX);
-			Vector3 cameraUp = Vector3.Transform(Vector3.Up, rotation);
-			cameraPosition = Vector3.Transform(cameraPosition, rotation);
+			Matrix rotation = Matrix.CreateFromYawPitchRoll(cameraYaw, cameraPitch, 0);
+			cameraPosition = Vector3.Transform(Vector3.Backward, rotation);
+			cameraPosition *= cameraDistance;
 
 			// Set up scale, camera direction, and perspective projection
-			Matrix world = Matrix.CreateScale(100) * Matrix.CreateRotationX(-MathHelper.PiOver2);
-			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, cameraUp);
+			Matrix world = Matrix.CreateScale(100);
+			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
 			Matrix projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
-            GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+			GraphicsDevice.Indices = indexBuffer;
+
+            GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
 
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
@@ -214,8 +205,10 @@ namespace Project3
                 effect.Parameters["CameraPosition"].SetValue(cameraPosition);
                 effect.Parameters["SkyBoxTexture"].SetValue(skyboxTexture);
 
-                graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 12);
+                graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
             }
+
+			GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
             paddleWorld = Matrix.CreateScale(new Vector3(2, 2, 0.25f));
 
@@ -228,7 +221,7 @@ namespace Project3
                 baseEffect.EnableDefaultLighting();
                 baseEffect.DiffuseColor = new Vector3(0, 1, 0);
 
-                graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 12);
+                graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
             }
 
             base.Draw(gameTime);
