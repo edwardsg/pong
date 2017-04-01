@@ -82,7 +82,7 @@ namespace Project3
 
             effect = Content.Load<Effect>("skybox");
             baseEffect = new BasicEffect(GraphicsDevice);
-            skyboxTexture = Content.Load<TextureCube>("SkyBoxTexture");
+            skyboxTexture = Content.Load<TextureCube>("Islands");
 
 			// Cube data - four vertices for each face, put into index buffer as 12 triangles
 			VertexPositionNormalTexture[] cubeVertices = new VertexPositionNormalTexture[24]
