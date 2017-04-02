@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Primitives;
 
 namespace Project3
 {
@@ -31,15 +32,37 @@ namespace Project3
 		public float minPitch = -MathHelper.PiOver2 + 0.3f;
 		public float maxPitch = MathHelper.PiOver2 - 0.3f;
 
+        // Player position changes
+        float player1Y = 0;
+        float player1Z = 0;
+        float player2Y = 0;
+        float player2Z = 0;
+
 		VertexPositionNormalTexture[] baseCube;
         VertexBuffer vertexBuffer;
 		IndexBuffer indexBuffer;
 
+        /*VertexBuffer boundingBoxVertexBuffer;
+        IndexBuffer boundingBoxIndexBuffer;
+        VertexPosition[] boundingBox;
+        short[] boundingBoxIndices;*/
+
         Effect effect;
-        BasicEffect baseEffect;
+        BasicEffect cubeEffect;
+        BasicEffect ballEffect;
         TextureCube skyboxTexture;
 
         Matrix paddleWorld;
+        Matrix ballWorld;
+        //Matrix boundingBoxWorld;
+
+        // Player positions
+        Vector3 player1Position;
+        Vector3 player2Position;
+
+        SpherePrimitive ball;
+        Vector3 ballPosition = new Vector3(0, 0, 0);
+        Vector3 ballVelocity = new Vector3(-1f, 0, 0);
 
 		public Pong()
 		{
@@ -68,6 +91,11 @@ namespace Project3
 			// Set window title
 			Window.Title = "Space Cadet 3D Ping Pxong";
 
+            player1Position = new Vector3(-20, 0, 0);
+            player2Position = new Vector3(20, 0, 0);
+
+            ball = new SpherePrimitive(GraphicsDevice);
+
 			base.Initialize();
 		}
 
@@ -81,7 +109,8 @@ namespace Project3
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 
             effect = Content.Load<Effect>("skybox");
-            baseEffect = new BasicEffect(GraphicsDevice);
+            cubeEffect = new BasicEffect(GraphicsDevice);
+            ballEffect = new BasicEffect(GraphicsDevice);
             skyboxTexture = Content.Load<TextureCube>("Islands");
 
 			// Cube data - four vertices for each face, put into index buffer as 12 triangles
@@ -131,10 +160,44 @@ namespace Project3
 				20, 21, 23, 22, 23, 21
 			};
 
-			indexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), cubeIndices.Length, BufferUsage.WriteOnly);
-			indexBuffer.SetData<short>(cubeIndices);
+            indexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), cubeIndices.Length, BufferUsage.WriteOnly);
+            indexBuffer.SetData<short>(cubeIndices);
 
-		}
+            /*boundingBox = new VertexPosition[8]
+            {
+                new VertexPosition(new Vector3(-1, -1, 1)),
+                new VertexPosition(new Vector3(-1, 1, 1)),
+                new VertexPosition(new Vector3(1, 1, 1)),
+                new VertexPosition(new Vector3(1, -1, 1)),
+
+                new VertexPosition(new Vector3(1, -1, -1)),
+                new VertexPosition(new Vector3(-1, -1, -1)),
+                new VertexPosition(new Vector3(-1, 1, -1)),
+                new VertexPosition(new Vector3(1, 1, -1)),
+            };
+
+            boundingBoxVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPosition), boundingBox.Length, BufferUsage.WriteOnly);
+            boundingBoxVertexBuffer.SetData<VertexPosition>(boundingBox);
+
+            boundingBoxIndices = new short[48]
+            {
+                1, 2, 2, 3, 3, 4, 4, 1,
+                4, 5, 5, 8, 8, 3, 3, 4,
+                5, 6, 6, 7, 7, 8, 8, 5,
+                6, 1, 1, 2, 2, 7, 7, 6,
+                2, 3, 3, 8, 8, 7, 7, 2,
+                1, 4, 4, 5, 5, 6, 6, 1
+            };
+
+            boundingBoxIndices = new short[8]
+            {
+                1, 2, 2, 3, 3, 4, 4, 1
+            };
+
+            boundingBoxIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), boundingBoxIndices.Length, BufferUsage.WriteOnly);
+            boundingBoxIndexBuffer.SetData<short>(boundingBoxIndices);*/
+
+        }
 
 		/// <summary>
 		/// UnloadContent will be called once per game and is the place to unload
@@ -171,8 +234,71 @@ namespace Project3
 			else if (keyboard.IsKeyDown(Keys.S) && cameraPitch < maxPitch)
 				cameraPitch += cameraRotateSpeed * milliseconds;
 
-			base.Update(gameTime);
+            player1Y = 0;
+            player1Z = 0;
+
+            // Player 1 Y movement - Up and Down arrow keys
+            if (keyboard.IsKeyDown(Keys.Up))
+                player1Y += 0.5f;
+            if (keyboard.IsKeyDown(Keys.Down))
+                player1Y -= 0.5f;
+
+            // Player 1 Z movement - Right and Left arrow keys
+            if (keyboard.IsKeyDown(Keys.Right))
+                player1Z += 0.5f;
+            if (keyboard.IsKeyDown(Keys.Left))
+                player1Z -= 0.5f;
+
+            player1Position += new Vector3(0, player1Y, player1Z);
+            float timePassed = gameTime.ElapsedGameTime.Milliseconds / 100f;
+            UpdateBall(timePassed);
+
+            base.Update(gameTime);
 		}
+
+        private void UpdateBall(float timePassed)
+        {
+            ballPosition += ballVelocity * timePassed;
+
+            // Preliminarily hardcoded in the bounds for the ball movement; 19.5 is the box and the 1 accounts for the radius of the ball (TODO fix later)
+
+            // If ball is at the X bounds of the box at the side with player 1
+            if (ballPosition.X < -19.5f + 1)
+                checkPlayer(player1Position);
+
+            // If ball is at the X bounds of the box at the side with player 2
+            if (ballPosition.X > 19f - 1)
+                checkPlayer(player2Position);
+            
+            if (ballPosition.Y > 19.5f || ballPosition.Y < -19.5f)
+                ballVelocity.Y *= -1;
+
+            if (ballPosition.Z > 19.5f || ballPosition.Z < -19.5f)
+                ballVelocity.Z *= -1;
+        }
+
+        private void checkPlayer(Vector3 playerPosition)
+        {
+            // If the position of the ball is within the bounds of the position of the paddle
+            if (ballPosition.Z <= playerPosition.Z + 2 && ballPosition.Z >= playerPosition.Z - 2 &&
+                ballPosition.Y <= playerPosition.Y + 2 && ballPosition.Y >= playerPosition.Y - 2)
+            {
+                float xDifference = ballPosition.X - playerPosition.X;
+                float yDifference = ballPosition.Y - playerPosition.Y;
+                ballVelocity.Normalize();
+
+                ballVelocity += new Vector3(xDifference, yDifference, 0);
+                ballVelocity.Normalize();
+                ballVelocity *= 1;
+            }
+
+            // Else the ball went out of the bounds and should be reset
+            else
+            {
+                ballPosition = Vector3.Zero;
+                ballVelocity = new Vector3(-1f, 0, 0);
+            }
+        }
 
 		/// <summary>
 		/// This is called when the game should draw itself.
@@ -182,11 +308,11 @@ namespace Project3
 		{
 			// Rotate camera around origin
 			Matrix rotation = Matrix.CreateFromYawPitchRoll(cameraYaw, cameraPitch, 0);
-			cameraPosition = Vector3.Transform(Vector3.Backward, rotation);
+			cameraPosition = Vector3.Transform(Vector3.Backward * 1.5f, rotation);
 			cameraPosition *= cameraDistance;
 
 			// Set up scale, camera direction, and perspective projection
-			Matrix world = Matrix.CreateScale(100);
+			Matrix world = Matrix.CreateScale(200);
 			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
 			Matrix projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
 
@@ -210,18 +336,46 @@ namespace Project3
 
 			GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
-            paddleWorld = Matrix.CreateScale(new Vector3(2, 2, 0.25f));
+            paddleWorld = Matrix.CreateScale(new Vector3(0.25f, 2, 2)) * Matrix.CreateTranslation(player1Position);
 
-            foreach (EffectPass pass in baseEffect.CurrentTechnique.Passes)
+            foreach (EffectPass pass in cubeEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                baseEffect.World = paddleWorld;
-                baseEffect.View = view;
-                baseEffect.Projection = projection;
-                baseEffect.EnableDefaultLighting();
-                baseEffect.DiffuseColor = new Vector3(0, 1, 0);
+                cubeEffect.World = paddleWorld;
+                cubeEffect.View = view;
+                cubeEffect.Projection = projection;
+                cubeEffect.EnableDefaultLighting();
+                cubeEffect.DiffuseColor = new Vector3(0, 1, 0);
 
                 graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
+            }
+
+            paddleWorld = Matrix.CreateScale(new Vector3(0.25f, 2, 2)) * Matrix.CreateTranslation(player2Position);
+
+            foreach (EffectPass pass in cubeEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                cubeEffect.World = paddleWorld;
+                cubeEffect.View = view;
+                cubeEffect.Projection = projection;
+                cubeEffect.EnableDefaultLighting();
+                cubeEffect.DiffuseColor = new Vector3(1, 1, 0);
+
+                graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
+            }
+
+            ballWorld = Matrix.CreateScale(2);
+
+            foreach (EffectPass pass in ballEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                ballEffect.World = ballWorld * Matrix.CreateTranslation(ballPosition);
+                ballEffect.View = view;
+                ballEffect.Projection = projection;
+                ballEffect.EnableDefaultLighting();
+                ballEffect.DiffuseColor = new Vector3(1, 0, 1);
+
+                ball.Draw(ballEffect);
             }
 
             base.Draw(gameTime);
