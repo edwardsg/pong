@@ -37,6 +37,16 @@ namespace Project3
             return position;
         }
 
+        public void setVelocity(Vector3 update)
+        {
+            velocity += update;
+        }
+
+        public Vector3 getVelocity()
+        {
+            return velocity;
+        }
+
         public void UpdateBall(float timePassed, Box player1, Box player2, Matrix boundingBoxWorld)
         {
             position += velocity * timePassed;

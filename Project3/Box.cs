@@ -12,7 +12,15 @@ namespace Project3
     {
         BasicEffect basicEffect;
         Matrix world;
-        
+        float alphaChange; // For visibility of paddle when in front of the ball
+
+        Vector3 front = new Vector3(0, 0, 20);
+        Vector3 back = new Vector3(0, 0, -20);
+        Vector3 right = new Vector3(10, 0, 0);
+        Vector3 left = new Vector3(-10, 0, 0);
+        Vector3 top = new Vector3(0, 10, 0);
+        Vector3 bottom = new Vector3(0, -10, 0);
+
         Vector3 position;
         Vector3 shapeDimensions;
 
@@ -33,9 +41,84 @@ namespace Project3
             return position;
         }
 
+        public void setShapeDimensions(Vector3 dimensions)
+        {
+            shapeDimensions = dimensions;
+        }
+
         public Vector3 getShapeDimensions()
         {
             return shapeDimensions;
+        }
+
+        // To do recursive computations for the position of the AI
+        public Vector3 detectCollision(Ball ball, Vector3 ballPosition, Vector3 ballVelocity)
+        {
+            Vector3 collision = Vector3.Zero;
+
+            // Case where need to check if ball hits plane
+            if (Vector3.Dot(-Vector3.UnitZ, ballVelocity) < 0)
+            {
+                float time = (front.Z - ball.getPosition().Z) / ballVelocity.Z;
+                collision = ballPosition + ballVelocity * time;
+                if (withinBounds(collision))
+                    return collision;
+            }
+
+            if (Vector3.Dot(Vector3.UnitZ, ballVelocity) < 0)
+            {
+                float time = (back.Z - ballPosition.Z) / ballVelocity.Z;
+                collision = ballPosition + ballVelocity * time;
+                if (withinBounds(collision))
+                    return collision;
+            }
+
+            // If the x plane normal dot product with the ball velocity is negative
+            if (Vector3.Dot(-Vector3.UnitX, ballVelocity) < 0)
+            {
+                float time = (right.X - ballPosition.X) / ballVelocity.X;
+                collision = ballPosition + ballVelocity * time;
+                ballVelocity.X *= -1;
+                return detectCollision(ball, collision, ballVelocity);
+            }
+
+            if (Vector3.Dot(Vector3.UnitX, ballVelocity) < 0)
+            {
+                float time = (left.X - ballPosition.X) / ballVelocity.X;
+                collision = ballPosition + ballVelocity * time;
+                ballVelocity.X *= -1;
+                return detectCollision(ball, collision, ballVelocity);
+            }
+
+            // If the y plane normal dot product with the ball velocity is negative
+            if (Vector3.Dot(-Vector3.UnitY, ballVelocity) < 0)
+            {
+                float time = (top.Y - ballPosition.Y) / ballVelocity.Y;
+                collision = ballPosition + ballVelocity * time;
+                ballVelocity.Y *= -1;
+                return detectCollision(ball, collision, ballVelocity);
+            }
+
+            if (Vector3.Dot(Vector3.UnitY, ballVelocity) < 0)
+            {
+                float time = (bottom.Y - ballPosition.Y) / ballVelocity.Y;
+                collision = ballPosition + ballVelocity * time;
+                ballVelocity.Y *= -1;
+                return detectCollision(ball, collision, ballVelocity);
+            }
+            
+            return collision;
+        }
+
+        private bool withinBounds(Vector3 collision)
+        {
+            if (collision.Z > front.Z || collision.Z < back.Z)
+                return false;
+            if (collision.X > right.X || collision.X < left.X)
+                return false;
+            if (collision.Y > top.Y || collision.Y < bottom.Y)
+                return false;
+            return true;
         }
 
         // Calls drawing method for shape using BasicEffect
