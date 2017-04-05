@@ -38,7 +38,7 @@ namespace Project3
 
         // Player position changes
         float player1Y = 0;
-        float player1Z = 0;
+        float player1X = 0;
         float player2Y = 0;
         float player2Z = 0;
 
@@ -59,15 +59,10 @@ namespace Project3
         BasicEffect boundingBoxEffect;
         TextureCube skyboxTexture;
         
-        Matrix ballWorld;
         Matrix boundingBoxWorld;
         
         Vector3 ballHitHelper;
         Vector3 ballHitHelperDimensions;
-
-        SpherePrimitive ballBase;
-        Vector3 ballPosition = new Vector3(0, 0, 0);
-        Vector3 ballVelocity = new Vector3(-1f, 0, 0);
 
 		public Pong()
 		{
@@ -96,15 +91,15 @@ namespace Project3
 			// Set window title
 			Window.Title = "Space Cadet 3D Ping Pxong";
 
-            ball = new Ball(graphics, new Vector3(0, 0, 0), new Vector3(-1f, 0, 0));
-            player1 = new Box(graphics, new Vector3(-20, 0, 0), new Vector3(0.2f, 1, 1));
-            player2 = new Box(graphics, new Vector3(20, 0, 0), new Vector3(0.2f, 1, 1));
+            ball = new Ball(graphics, new Vector3(0, 0, 0), new Vector3(0, 0, 1f));
+            player1 = new Box(graphics, new Vector3(0, 0, 20), new Vector3(1, 1, 0.2f));
+            player2 = new Box(graphics, new Vector3(0, 0, -20), new Vector3(1, 1, 0.2f));
             skybox = new Box(graphics, new Vector3(0, 0, 0), new Vector3(200, 200, 200));
-            
+
+            boundingBoxWorld = Matrix.CreateScale(new Vector3(10, 10, 20));
+
             ballHitHelper = new Vector3(-20f, 10f, 0);
             ballHitHelperDimensions = new Vector3(0.001f, 2, 2);
-
-            ballBase = new SpherePrimitive(GraphicsDevice);
 
 			base.Initialize();
 		}
@@ -241,26 +236,30 @@ namespace Project3
 				cameraPitch += cameraRotateSpeed * milliseconds;
 
             player1Y = 0;
-            player1Z = 0;
-
-            // TODO Adjust player movement to be 2/sqrt(2) for when two keys are pressed down
+            player1X = 0;
 
             // Player 1 Y movement - Up and Down arrow keys
-            if (keyboard.IsKeyDown(Keys.Up) && player1.getPosition().Y < 18)
-                player1Y += 0.5f;
-            if (keyboard.IsKeyDown(Keys.Down) && player1.getPosition().Y > -18)
-                player1Y -= 0.5f;
+            if (keyboard.IsKeyDown(Keys.Up) && player1.getPosition().Y < boundingBoxWorld.M22 - player1.getShapeDimensions().Y)
+                player1Y += 0.3f;
+            if (keyboard.IsKeyDown(Keys.Down) && player1.getPosition().Y > -boundingBoxWorld.M22 + player1.getShapeDimensions().Y)
+                player1Y -= 0.3f;
 
             // Player 1 Z movement - Right and Left arrow keys
-            if (keyboard.IsKeyDown(Keys.Right) && player1.getPosition().Z < 18)
-                player1Z += 0.5f;
-            if (keyboard.IsKeyDown(Keys.Left) && player1.getPosition().Z > -18)
-                player1Z -= 0.5f;
+            if (keyboard.IsKeyDown(Keys.Right) && player1.getPosition().X < boundingBoxWorld.M11 - player1.getShapeDimensions().X)
+                player1X += 0.3f;
+            if (keyboard.IsKeyDown(Keys.Left) && player1.getPosition().X > -boundingBoxWorld.M11 + player1.getShapeDimensions().X)
+                player1X -= 0.3f;
 
-            player1.setPosition(new Vector3(0, player1Y, player1Z));
-            //player1Position += new Vector3(0, player1Y, player1Z);
+            // Temporary fix
+            if (keyboard.GetPressedKeys().Length > 1)
+            {
+                player1Y *= MathHelper.ToRadians(45);
+                player1X *= MathHelper.ToRadians(45);
+            }
+
+            player1.setPosition(new Vector3(player1X, player1Y, 0));
             float timePassed = gameTime.ElapsedGameTime.Milliseconds / 100f;
-            ball.UpdateBall(timePassed, player1, player2);
+            ball.UpdateBall(timePassed, player1, player2, boundingBoxWorld);
 
             base.Update(gameTime);
 		}
@@ -293,13 +292,16 @@ namespace Project3
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
 			GraphicsDevice.Indices = indexBuffer;
 
+            // Draw SkyBox
             GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
             skybox.callDraw(graphics, view, projection, effect, cameraPosition, skyboxTexture);
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
             
+            // Draw paddles
             player1.callDraw(graphics, view, projection, Color.Green);
             player2.callDraw(graphics, view, projection, Color.Yellow);
 
+            // Draw ball
             ball.callDraw(graphics, view, projection, Color.Purple);
 
 
@@ -308,10 +310,7 @@ namespace Project3
             GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
             GraphicsDevice.Indices = boundingBoxIndexBuffer;
 
-            boundingBoxWorld = Matrix.CreateScale(20); //Matrix.CreateScale(new Vector3(20, 10, 10));
-            //boundingBoxEffect.LightingEnabled = false;
-            //boundingBoxEffect.TextureEnabled = false;
-            //boundingBoxEffect.VertexColorEnabled = false;
+            //boundingBoxWorld = Matrix.CreateScale(20); //Matrix.CreateScale(new Vector3(20, 10, 10));
             boundingBoxEffect.DiffuseColor = Color.White.ToVector3();
 
             foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
@@ -326,22 +325,5 @@ namespace Project3
             
             base.Draw(gameTime);
 		}
-
-        /*private void DrawPaddle(Vector3 playerPosition, Vector3 playerColor, Vector3 shapeDimensions)
-        {
-            paddleWorld = Matrix.CreateScale(shapeDimensions) * Matrix.CreateTranslation(playerPosition);
-
-            foreach (EffectPass pass in cubeEffect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-                cubeEffect.World = paddleWorld;
-                cubeEffect.View = view;
-                cubeEffect.Projection = projection;
-                cubeEffect.EnableDefaultLighting();
-                cubeEffect.DiffuseColor = playerColor;
-
-                graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
-            }
-        }*/
     }
 }

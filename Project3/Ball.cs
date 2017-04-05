@@ -29,7 +29,7 @@ namespace Project3
 
         public void setPosition(Vector3 update)
         {
-            position = update;
+            position += update;
         }
 
         public Vector3 getPosition()
@@ -37,32 +37,30 @@ namespace Project3
             return position;
         }
 
-        public void UpdateBall(float timePassed, Box player1, Box player2)
+        public void UpdateBall(float timePassed, Box player1, Box player2, Matrix boundingBoxWorld)
         {
             position += velocity * timePassed;
-
-            // Preliminarily hardcoded in the bounds for the ball movement; 19.5 is the box and the 1 accounts for the radius of the ball (TODO fix later)
-
+            
             // If ball is at the X bounds of the box at the side with player 1
-            if (position.X < -19.5f + 1)
+            if (position.Z > boundingBoxWorld.M33 - player1.getShapeDimensions().Z)
                 checkPlayer(player1.getPosition());
 
             // If ball is at the X bounds of the box at the side with player 2
-            if (position.X > 19.5f - 1)
+            if (position.Z < -boundingBoxWorld.M33 + player2.getShapeDimensions().Z)
                 checkPlayer(player2.getPosition());
 
-            if (position.Y > 19.5f || position.Y < -19.5f)
+            if (position.Y > boundingBoxWorld.M22 - 1 || position.Y < -boundingBoxWorld.M22 + 1)
                 velocity.Y *= -1;
 
-            if (position.Z > 19.5f || position.Z < -19.5f)
-                velocity.Z *= -1;
+            if (position.X > boundingBoxWorld.M11 - 1 || position.X < -boundingBoxWorld.M11 + 1)
+                velocity.X *= -1;
         }
 
         private void checkPlayer(Vector3 playerPosition)
         {
             // If the position of the ball is within the bounds of the position of the paddle
-            if (position.Z <= playerPosition.Z + 4f && position.Z >= playerPosition.Z - 4f &&
-                position.Y <= playerPosition.Y + 4f && position.Y >= playerPosition.Y - 4f)
+            if (position.X <= playerPosition.X + 2f && position.X >= playerPosition.X - 2f &&
+                position.Y <= playerPosition.Y + 2f && position.Y >= playerPosition.Y - 2f)
             {
                 float xDifference = position.X - playerPosition.X;
                 float yDifference = position.Y - playerPosition.Y;
@@ -72,13 +70,14 @@ namespace Project3
                 velocity += new Vector3(xDifference, yDifference, zDifference);
                 velocity.Normalize();
                 velocity *= 1;
+                velocity.Z *= -1;
             }
 
             // Else the ball went out of the bounds and should be reset
             else
             {
                 position = Vector3.Zero;
-                velocity = new Vector3(-1f, 0, 0);
+                velocity = new Vector3(0, 0, 1f);
             }
         }
 

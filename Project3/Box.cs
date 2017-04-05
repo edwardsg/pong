@@ -33,6 +33,11 @@ namespace Project3
             return position;
         }
 
+        public Vector3 getShapeDimensions()
+        {
+            return shapeDimensions;
+        }
+
         // Calls drawing method for shape using BasicEffect
         public void callDraw(GraphicsDeviceManager graphics, Matrix view, Matrix projection, Color color)
         {
