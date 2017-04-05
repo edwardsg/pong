@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Primitives;
 
 namespace Project3
 {
@@ -31,15 +32,37 @@ namespace Project3
 		public float minPitch = -MathHelper.PiOver2 + 0.3f;
 		public float maxPitch = MathHelper.PiOver2 - 0.3f;
 
-		VertexPositionNormalTexture[] baseCube;
+        Matrix world;
+        Matrix view;
+        Matrix projection;
+
+        // Player position changes
+        float player1Y = 0;
+        float player1X = 0;
+        float player2Y = 0;
+        float player2Z = 0;
+
+        Ball ball;
+        Box player1;
+        Box player2;
+        Box skybox;
+        Box boundingBoxShape;
+
         VertexBuffer vertexBuffer;
 		IndexBuffer indexBuffer;
 
-        Effect effect;
-        BasicEffect baseEffect;
-        TextureCube skyboxTexture;
+        VertexBuffer boundingBoxVertexBuffer;
+        IndexBuffer boundingBoxIndexBuffer;
 
-        Matrix paddleWorld;
+        Effect effect;
+        BasicEffect ballEffect;
+        BasicEffect boundingBoxEffect;
+        TextureCube skyboxTexture;
+        
+        Matrix boundingBoxWorld;
+        
+        Vector3 ballHitHelper;
+        Vector3 ballHitHelperDimensions;
 
 		public Pong()
 		{
@@ -68,6 +91,16 @@ namespace Project3
 			// Set window title
 			Window.Title = "Space Cadet 3D Ping Pxong";
 
+            ball = new Ball(graphics, new Vector3(0, 0, 0), new Vector3(0, 0, 1f));
+            player1 = new Box(graphics, new Vector3(0, 0, 20), new Vector3(1, 1, 0.2f));
+            player2 = new Box(graphics, new Vector3(0, 0, -20), new Vector3(1, 1, 0.2f));
+            skybox = new Box(graphics, new Vector3(0, 0, 0), new Vector3(200, 200, 200));
+
+            boundingBoxWorld = Matrix.CreateScale(new Vector3(10, 10, 20));
+
+            ballHitHelper = new Vector3(-20f, 10f, 0);
+            ballHitHelperDimensions = new Vector3(0.001f, 2, 2);
+
 			base.Initialize();
 		}
 
@@ -81,7 +114,8 @@ namespace Project3
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 
             effect = Content.Load<Effect>("skybox");
-            baseEffect = new BasicEffect(GraphicsDevice);
+            ballEffect = new BasicEffect(GraphicsDevice);
+            boundingBoxEffect = new BasicEffect(GraphicsDevice);
             skyboxTexture = Content.Load<TextureCube>("Islands");
 
 			// Cube data - four vertices for each face, put into index buffer as 12 triangles
@@ -131,10 +165,39 @@ namespace Project3
 				20, 21, 23, 22, 23, 21
 			};
 
-			indexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), cubeIndices.Length, BufferUsage.WriteOnly);
-			indexBuffer.SetData<short>(cubeIndices);
+            indexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), cubeIndices.Length, BufferUsage.WriteOnly);
+            indexBuffer.SetData<short>(cubeIndices);
 
-		}
+            VertexPosition[] boundingBox = new VertexPosition[8]
+            {
+                new VertexPosition(new Vector3(-1, -1, 1)),
+                new VertexPosition(new Vector3(-1, 1, 1)),
+                new VertexPosition(new Vector3(1, 1, 1)),
+                new VertexPosition(new Vector3(1, -1, 1)),
+
+                new VertexPosition(new Vector3(1, -1, -1)),
+                new VertexPosition(new Vector3(-1, -1, -1)),
+                new VertexPosition(new Vector3(-1, 1, -1)),
+                new VertexPosition(new Vector3(1, 1, -1)),
+            };
+
+            boundingBoxVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPosition), boundingBox.Length, BufferUsage.WriteOnly);
+            boundingBoxVertexBuffer.SetData<VertexPosition>(boundingBox);
+
+            short[] boundingBoxIndices = new short[48]
+            {
+                0, 1, 1, 2, 2, 3, 3, 0,
+                3, 4, 4, 7, 7, 2, 2, 3,
+                4, 5, 5, 6, 6, 7, 7, 4,
+                5, 0, 0, 1, 1, 6, 6, 5,
+                1, 2, 2, 7, 7, 6, 6, 1,
+                0, 3, 3, 4, 4, 5, 5, 0
+            };
+
+            boundingBoxIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), boundingBoxIndices.Length, BufferUsage.WriteOnly);
+            boundingBoxIndexBuffer.SetData<short>(boundingBoxIndices);
+
+        }
 
 		/// <summary>
 		/// UnloadContent will be called once per game and is the place to unload
@@ -143,6 +206,7 @@ namespace Project3
 		protected override void UnloadContent()
 		{
 			vertexBuffer.Dispose();
+            indexBuffer.Dispose();
 		}
 
 		/// <summary>
@@ -171,8 +235,40 @@ namespace Project3
 			else if (keyboard.IsKeyDown(Keys.S) && cameraPitch < maxPitch)
 				cameraPitch += cameraRotateSpeed * milliseconds;
 
-			base.Update(gameTime);
+            player1Y = 0;
+            player1X = 0;
+
+            // Player 1 Y movement - Up and Down arrow keys
+            if (keyboard.IsKeyDown(Keys.Up) && player1.getPosition().Y < boundingBoxWorld.M22 - player1.getShapeDimensions().Y)
+                player1Y += 0.3f;
+            if (keyboard.IsKeyDown(Keys.Down) && player1.getPosition().Y > -boundingBoxWorld.M22 + player1.getShapeDimensions().Y)
+                player1Y -= 0.3f;
+
+            // Player 1 Z movement - Right and Left arrow keys
+            if (keyboard.IsKeyDown(Keys.Right) && player1.getPosition().X < boundingBoxWorld.M11 - player1.getShapeDimensions().X)
+                player1X += 0.3f;
+            if (keyboard.IsKeyDown(Keys.Left) && player1.getPosition().X > -boundingBoxWorld.M11 + player1.getShapeDimensions().X)
+                player1X -= 0.3f;
+
+            // Temporary fix
+            if (keyboard.GetPressedKeys().Length > 1)
+            {
+                player1Y *= MathHelper.ToRadians(45);
+                player1X *= MathHelper.ToRadians(45);
+            }
+
+            player1.setPosition(new Vector3(player1X, player1Y, 0));
+            float timePassed = gameTime.ElapsedGameTime.Milliseconds / 100f;
+            ball.UpdateBall(timePassed, player1, player2, boundingBoxWorld);
+
+            base.Update(gameTime);
 		}
+
+        // Made to check if the ball hits a wall so that we can implement some sort of color
+        private void checkBallBounds()
+        {
+            
+        }
 
 		/// <summary>
 		/// This is called when the game should draw itself.
@@ -182,71 +278,52 @@ namespace Project3
 		{
 			// Rotate camera around origin
 			Matrix rotation = Matrix.CreateFromYawPitchRoll(cameraYaw, cameraPitch, 0);
-			cameraPosition = Vector3.Transform(Vector3.Backward, rotation);
+			cameraPosition = Vector3.Transform(Vector3.Backward * 1f, rotation); //was 1.5f, but I changed it for debugging purposes
 			cameraPosition *= cameraDistance;
 
 			// Set up scale, camera direction, and perspective projection
-			Matrix world = Matrix.CreateScale(100);
-			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
-			Matrix projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
+			world = Matrix.CreateScale(200);
+			view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
+			projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
+
+            // Set VertexBuffer and IndexBuffer for SkyBox and Paddles
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
 			GraphicsDevice.Indices = indexBuffer;
 
-			// Draw skybox
+            // Draw SkyBox
             GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
+            skybox.callDraw(graphics, view, projection, effect, cameraPosition, skyboxTexture);
+            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+            
+            // Draw paddles
+            player1.callDraw(graphics, view, projection, Color.Green);
+            player2.callDraw(graphics, view, projection, Color.Yellow);
 
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            // Draw ball
+            ball.callDraw(graphics, view, projection, Color.Purple);
+
+
+
+            
+            GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
+            GraphicsDevice.Indices = boundingBoxIndexBuffer;
+
+            //boundingBoxWorld = Matrix.CreateScale(20); //Matrix.CreateScale(new Vector3(20, 10, 10));
+            boundingBoxEffect.DiffuseColor = Color.White.ToVector3();
+
+            foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                effect.Parameters["World"].SetValue(world * Matrix.CreateTranslation(cameraPosition));
-                effect.Parameters["View"].SetValue(view);
-                effect.Parameters["Projection"].SetValue(projection);
-                effect.Parameters["CameraPosition"].SetValue(cameraPosition);
-                effect.Parameters["SkyBoxTexture"].SetValue(skyboxTexture);
+                boundingBoxEffect.World = boundingBoxWorld;
+                boundingBoxEffect.View = view;
+                boundingBoxEffect.Projection = projection;
 
-                graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
+                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 24);
             }
-
-			GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-
-			// Draw paddle
-            paddleWorld = Matrix.CreateScale(new Vector3(2, 2, 0.25f));
-
-            foreach (EffectPass pass in baseEffect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-                baseEffect.World = paddleWorld;
-                baseEffect.View = view;
-                baseEffect.Projection = projection;
-                baseEffect.EnableDefaultLighting();
-                baseEffect.DiffuseColor = new Vector3(0, 1, 0);
-
-                graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
-            }
-
-			// Draw bounding box
-			RasterizerState rasterizerState = new RasterizerState();
-			rasterizerState.FillMode = FillMode.WireFrame;
-			rasterizerState.CullMode = CullMode.CullCounterClockwiseFace;
-			GraphicsDevice.RasterizerState = rasterizerState;
-
-			Matrix boundWorld = Matrix.CreateScale(5);
-
-			foreach (EffectPass pass in baseEffect.CurrentTechnique.Passes)
-			{
-				pass.Apply();
-				baseEffect.World = boundWorld;
-				baseEffect.View = view;
-				baseEffect.Projection = projection;
-				baseEffect.EnableDefaultLighting();
-				baseEffect.DiffuseColor = new Vector3(1, 1, 1);
-
-				graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
-			}
-
-			base.Draw(gameTime);
+            
+            base.Draw(gameTime);
 		}
-	}
+    }
 }
