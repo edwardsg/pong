@@ -194,6 +194,7 @@ namespace Project3
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
 			GraphicsDevice.Indices = indexBuffer;
 
+			// Draw skybox
             GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
 
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
@@ -210,6 +211,7 @@ namespace Project3
 
 			GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
+			// Draw paddle
             paddleWorld = Matrix.CreateScale(new Vector3(2, 2, 0.25f));
 
             foreach (EffectPass pass in baseEffect.CurrentTechnique.Passes)
@@ -224,7 +226,27 @@ namespace Project3
                 graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
             }
 
-            base.Draw(gameTime);
+			// Draw bounding box
+			RasterizerState rasterizerState = new RasterizerState();
+			rasterizerState.FillMode = FillMode.WireFrame;
+			rasterizerState.CullMode = CullMode.CullCounterClockwiseFace;
+			GraphicsDevice.RasterizerState = rasterizerState;
+
+			Matrix boundWorld = Matrix.CreateScale(5);
+
+			foreach (EffectPass pass in baseEffect.CurrentTechnique.Passes)
+			{
+				pass.Apply();
+				baseEffect.World = boundWorld;
+				baseEffect.View = view;
+				baseEffect.Projection = projection;
+				baseEffect.EnableDefaultLighting();
+				baseEffect.DiffuseColor = new Vector3(1, 1, 1);
+
+				graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
+			}
+
+			base.Draw(gameTime);
 		}
 	}
 }
