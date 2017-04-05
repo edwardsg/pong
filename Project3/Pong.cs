@@ -292,7 +292,6 @@ namespace Project3
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
 			GraphicsDevice.Indices = indexBuffer;
 
-            // Draw SkyBox
             GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
             skybox.callDraw(graphics, view, projection, effect, cameraPosition, skyboxTexture);
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
@@ -310,8 +309,7 @@ namespace Project3
             GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
             GraphicsDevice.Indices = boundingBoxIndexBuffer;
 
-            //boundingBoxWorld = Matrix.CreateScale(20); //Matrix.CreateScale(new Vector3(20, 10, 10));
-            boundingBoxEffect.DiffuseColor = Color.White.ToVector3();
+            paddleWorld = Matrix.CreateScale(new Vector3(2, 2, 0.25f));
 
             foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
             {
@@ -322,7 +320,7 @@ namespace Project3
 
                 GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 24);
             }
-            
+
             base.Draw(gameTime);
 		}
     }
