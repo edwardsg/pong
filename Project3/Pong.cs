@@ -46,7 +46,8 @@ namespace Project3
         Box player1;
         Box player2;
         Box skybox;
-        Box boundingBoxShape;
+        Box hitHelper;
+        //Box boundingBoxShape;
 
         VertexBuffer vertexBuffer;
 		IndexBuffer indexBuffer;
@@ -91,10 +92,31 @@ namespace Project3
 			// Set window title
 			Window.Title = "Space Cadet 3D Ping Pxong";
 
+            Vector3[] normals = new Vector3[6]
+            {
+                new Vector3(0, 0, -1),  // Front
+                new Vector3(0, 0, 1),   // Back
+                new Vector3(-1, 0, 0),  // Right
+                new Vector3(1, 0, 0),   // Left
+                new Vector3(0, -1, 0),  // Top
+                new Vector3(0, 1, 0)    // Bottom
+            };
+
+            Vector3[] planes = new Vector3[6]
+            {
+                new Vector3(0, 0, 20),  // Front
+                new Vector3(0, 0, -20),   // Back
+                new Vector3(10, 0, 0),  // Right
+                new Vector3(-10, 0, 0),   // Left
+                new Vector3(0, 10, 0),  // Top
+                new Vector3(0, -10, 0)    // Bottom
+            };
+
             ball = new Ball(graphics, new Vector3(0, 0, 0), new Vector3(0, 0, 1f));
             player1 = new Box(graphics, new Vector3(0, 0, 20), new Vector3(1, 1, 0.2f));
             player2 = new Box(graphics, new Vector3(0, 0, -20), new Vector3(1, 1, 0.2f));
             skybox = new Box(graphics, new Vector3(0, 0, 0), new Vector3(200, 200, 200));
+            hitHelper = new Box(graphics, new Vector3(0, 0, 20), new Vector3(1, 1, 0.001f));
 
             boundingBoxWorld = Matrix.CreateScale(new Vector3(10, 10, 20));
 
@@ -259,6 +281,7 @@ namespace Project3
 
             player1.setPosition(new Vector3(player1X, player1Y, 0));
             float timePassed = gameTime.ElapsedGameTime.Milliseconds / 100f;
+            checkBallBounds();
             ball.UpdateBall(timePassed, player1, player2, boundingBoxWorld);
 
             base.Update(gameTime);
@@ -267,7 +290,9 @@ namespace Project3
         // Made to check if the ball hits a wall so that we can implement some sort of color
         private void checkBallBounds()
         {
-            
+            Vector3 currentPosition = hitHelper.getPosition();
+            //Vector3 test = hitHelper.detectCollision(ball, ball.getPosition(), ball.getVelocity());
+            hitHelper.setPosition(hitHelper.detectCollision(ball, ball.getPosition(), ball.getVelocity()) - currentPosition);
         }
 
 		/// <summary>
@@ -300,6 +325,7 @@ namespace Project3
             // Draw paddles
             player1.callDraw(graphics, view, projection, Color.Green);
             player2.callDraw(graphics, view, projection, Color.Yellow);
+            hitHelper.callDraw(graphics, view, projection, Color.Red);
 
             // Draw ball
             ball.callDraw(graphics, view, projection, Color.Purple);
