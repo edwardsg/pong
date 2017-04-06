@@ -49,16 +49,17 @@ namespace Project3
             return velocity;
         }
 
+        // TODO: Still can have occasional glancing blows that cause errors in paddle and ball update
         public bool UpdateBall(float timePassed, Box player1, Box player2, Box helper, Vector3 boundingBoxWorld)
         {
             position += velocity * timePassed;
             
             // If ball is at the Z bounds of the box at the side with player 1
-            if (position.Z > boundingBoxWorld.Z - player1.getShapeDimensions().Z * 2)
+            if (position.Z > boundingBoxWorld.Z - radius)
                 return checkPlayer(player1.getPosition(), helper);
 
             // If ball is at the Z bounds of the box at the side with player 2
-            if (position.Z < -boundingBoxWorld.Z + player2.getShapeDimensions().Z * 2)
+            if (position.Z < -boundingBoxWorld.Z + radius)
                 return checkPlayer(player2.getPosition(), helper);
 
             if (position.Y > boundingBoxWorld.Y - radius || position.Y < -boundingBoxWorld.Y + radius)

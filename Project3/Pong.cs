@@ -265,15 +265,15 @@ namespace Project3
 
             // Player 1 Y movement - Up and Down arrow keys
             if (keyboard.IsKeyDown(Keys.Up) && player1.getPosition().Y < boundingBoxWorld.M22 - player1.getShapeDimensions().Y)
-                player1Y += 0.3f;
+                player1Y += 0.2f;
             if (keyboard.IsKeyDown(Keys.Down) && player1.getPosition().Y > -boundingBoxWorld.M22 + player1.getShapeDimensions().Y)
-                player1Y -= 0.3f;
+                player1Y -= 0.2f;
 
             // Player 1 Z movement - Right and Left arrow keys
             if (keyboard.IsKeyDown(Keys.Right) && player1.getPosition().X < boundingBoxWorld.M11 - player1.getShapeDimensions().X)
-                player1X += 0.3f;
+                player1X += 0.2f;
             if (keyboard.IsKeyDown(Keys.Left) && player1.getPosition().X > -boundingBoxWorld.M11 + player1.getShapeDimensions().X)
-                player1X -= 0.3f;
+                player1X -= 0.2f;
 
             // Temporary fix; need to limit to arrow keys
             if (keyboard.GetPressedKeys().Length > 1)

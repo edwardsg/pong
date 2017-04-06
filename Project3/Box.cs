@@ -63,6 +63,7 @@ namespace Project3
             {
                 float time = (front.Z - ballPosition.Z) / ballVelocity.Z;
                 collision = ballPosition + ballVelocity * time;
+
                 if (withinBounds(collision))
                     return collision;
             }
@@ -71,6 +72,7 @@ namespace Project3
             {
                 float time = (back.Z - ballPosition.Z) / ballVelocity.Z;
                 collision = ballPosition + ballVelocity * time;
+
                 if (withinBounds(collision))
                     return collision;
             }
@@ -80,18 +82,24 @@ namespace Project3
             {
                 float time = (right.X - ballPosition.X) / ballVelocity.X;
                 collision = ballPosition + ballVelocity * time;
-                ballVelocity.X *= -1;
+
                 if (withinBounds(collision))
+                {
+                    ballVelocity.X *= -1;
                     return detectCollision(collision, ballVelocity);
+                }
             }
 
             if (Vector3.Dot(Vector3.UnitX, ballVelocity) < 0)
             {
                 float time = (left.X - ballPosition.X) / ballVelocity.X;
                 collision = ballPosition + ballVelocity * time;
-                ballVelocity.X *= -1;
+
                 if (withinBounds(collision))
+                {
+                    ballVelocity.X *= -1;
                     return detectCollision(collision, ballVelocity);
+                }
             }
 
             // If the y plane normal dot product with the ball velocity is negative
@@ -99,18 +107,24 @@ namespace Project3
             {
                 float time = (top.Y - ballPosition.Y) / ballVelocity.Y;
                 collision = ballPosition + ballVelocity * time;
-                ballVelocity.Y *= -1;
+
                 if (withinBounds(collision))
+                {
+                    ballVelocity.Y *= -1;
                     return detectCollision(collision, ballVelocity);
+                }
             }
 
             if (Vector3.Dot(Vector3.UnitY, ballVelocity) < 0)
             {
                 float time = (bottom.Y - ballPosition.Y) / ballVelocity.Y;
                 collision = ballPosition + ballVelocity * time;
-                ballVelocity.Y *= -1;
+
                 if (withinBounds(collision))
+                {
+                    ballVelocity.Y *= -1;
                     return detectCollision(collision, ballVelocity);
+                }
             }
             
             return collision;
