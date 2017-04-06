@@ -10,8 +10,8 @@ namespace Project3
 {
     class Box : Shape
     {
-        BasicEffect basicEffect;
-        Matrix world;
+        private new BasicEffect Effect { get; }
+		public Color Color { get; }
         float alphaChange; // For visibility of paddle when in front of the ball
 
         Vector3 front = new Vector3(0, 0, 20);
@@ -20,25 +20,17 @@ namespace Project3
         Vector3 left = new Vector3(-10, 0, 0);
         Vector3 top = new Vector3(0, 10, 0);
         Vector3 bottom = new Vector3(0, -10, 0);
-
-        Vector3 position;
+		
         Vector3 shapeDimensions;
 
-        public Box(GraphicsDeviceManager graphics, Vector3 position, Vector3 shapeDimensions)
+        public Box(BasicEffect effect, Vector3 position, Vector3 scale, Color color) : base(effect, position, scale)
         {
-            basicEffect = new BasicEffect(graphics.GraphicsDevice);
-            this.position = position;
-            this.shapeDimensions = shapeDimensions;
+			Color = color;
         }
 
         public void setPosition(Vector3 update)
         {
-            position += update;
-        }
-
-        public Vector3 getPosition()
-        {
-            return position;
+            Position += update;
         }
 
         public void setShapeDimensions(Vector3 dimensions)
@@ -59,7 +51,7 @@ namespace Project3
             // Case where need to check if ball hits plane
             if (Vector3.Dot(-Vector3.UnitZ, ballVelocity) < 0)
             {
-                float time = (front.Z - ball.getPosition().Z) / ballVelocity.Z;
+                float time = (front.Z - ball.Position.Z) / ballVelocity.Z;
                 collision = ballPosition + ballVelocity * time;
                 if (withinBounds(collision))
                     return collision;
@@ -121,19 +113,26 @@ namespace Project3
             return true;
         }
 
-        // Calls drawing method for shape using BasicEffect
-        public void callDraw(GraphicsDeviceManager graphics, Matrix view, Matrix projection, Color color)
-        {
-            world = Matrix.CreateScale(shapeDimensions) * Matrix.CreateTranslation(position);
-            DrawShape(graphics, world, view, projection, basicEffect, color);
-        }
+		public override void Draw(BasicEffect effect, Vector3 cameraPosition, Matrix projection)
+		{
+			GraphicsDevice device = effect.GraphicsDevice;
 
-        // Calls drawing method for shape using Effect
-        public void callDraw(GraphicsDeviceManager graphics, Matrix view, Matrix projection, Effect effect, Vector3 cameraPosition,
-                             TextureCube texture)
-        {
-            world = Matrix.CreateScale(shapeDimensions) * Matrix.CreateTranslation(cameraPosition);
-            DrawShape(graphics, world, view, projection, effect, cameraPosition, texture);
-        }
-    }
+			Matrix world = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Position);
+			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
+
+			effect.World = world;
+			effect.View = view;
+			effect.Projection = projection;
+			effect.EnableDefaultLighting();
+			effect.DiffuseColor = Color.ToVector3();
+
+			device.RasterizerState = RasterizerState.CullCounterClockwise;
+
+			foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+			{
+				pass.Apply();
+				device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
+			}
+		}
+	}
 }

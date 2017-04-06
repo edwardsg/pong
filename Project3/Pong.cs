@@ -22,9 +22,9 @@ namespace Project3
 		private const float cameraRotateSpeed = 0.002f;
 
 		// Projection
-		private const float viewAngle = .9f;
-		private const float nearPlane = .01f;
-		private const float farPlane = 500;
+		public const float viewAngle = .9f;
+		public const float nearPlane = .01f;
+		public const float farPlane = 500;
 
 		private Vector3 cameraPosition;
 		private float cameraYaw = 0;
@@ -42,11 +42,10 @@ namespace Project3
         float player2Y = 0;
         float player2Z = 0;
 
-        Ball ball;
-        Box player1;
-        Box player2;
-        Box skybox;
-        Box hitHelper;
+		Ball ball;
+		SkyBox skyBox;
+		Box player1, player2, hitHelper;
+		Shape[] shapes;
         //Box boundingBoxShape;
 
         VertexBuffer vertexBuffer;
@@ -55,10 +54,10 @@ namespace Project3
         VertexBuffer boundingBoxVertexBuffer;
         IndexBuffer boundingBoxIndexBuffer;
 
-        Effect effect;
-        BasicEffect ballEffect;
+        Effect skyBoxEffect;
+        BasicEffect basicEffect;
         BasicEffect boundingBoxEffect;
-        TextureCube skyboxTexture;
+        TextureCube skyBoxTexture;
         
         Matrix boundingBoxWorld;
         
@@ -90,11 +89,11 @@ namespace Project3
 			graphics.ApplyChanges();
 
 			// Set window title
-			Window.Title = "Space Cadet 3D Ping Pxong";
+			Window.Title = "Space Cadet 3D Ping Paong";
 
-            Vector3[] normals = new Vector3[6]
-            {
-                new Vector3(0, 0, -1),  // Front
+			Vector3[] normals = new Vector3[6]
+			{
+				new Vector3(0, 0, -1),  // Front
                 new Vector3(0, 0, 1),   // Back
                 new Vector3(-1, 0, 0),  // Right
                 new Vector3(1, 0, 0),   // Left
@@ -102,21 +101,15 @@ namespace Project3
                 new Vector3(0, 1, 0)    // Bottom
             };
 
-            Vector3[] planes = new Vector3[6]
-            {
-                new Vector3(0, 0, 20),  // Front
+			Vector3[] planes = new Vector3[6]
+			{
+				new Vector3(0, 0, 20),  // Front
                 new Vector3(0, 0, -20),   // Back
                 new Vector3(10, 0, 0),  // Right
                 new Vector3(-10, 0, 0),   // Left
                 new Vector3(0, 10, 0),  // Top
                 new Vector3(0, -10, 0)    // Bottom
             };
-
-            ball = new Ball(graphics, new Vector3(0, 0, 0), new Vector3(0, 0, 1f));
-            player1 = new Box(graphics, new Vector3(0, 0, 20), new Vector3(1, 1, 0.2f));
-            player2 = new Box(graphics, new Vector3(0, 0, -20), new Vector3(1, 1, 0.2f));
-            skybox = new Box(graphics, new Vector3(0, 0, 0), new Vector3(200, 200, 200));
-            hitHelper = new Box(graphics, new Vector3(0, 0, 20), new Vector3(1, 1, 0.001f));
 
             boundingBoxWorld = Matrix.CreateScale(new Vector3(10, 10, 20));
 
@@ -135,10 +128,18 @@ namespace Project3
 			// Create a new SpriteBatch, which can be used to draw textures.
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            effect = Content.Load<Effect>("skybox");
-            ballEffect = new BasicEffect(GraphicsDevice);
+            basicEffect = new BasicEffect(GraphicsDevice);
+            skyBoxEffect = Content.Load<Effect>("skybox");
+            skyBoxTexture = Content.Load<TextureCube>("Islands");
             boundingBoxEffect = new BasicEffect(GraphicsDevice);
-            skyboxTexture = Content.Load<TextureCube>("Islands");
+
+			ball = new Ball(basicEffect, Vector3.Zero, Vector3.UnitZ, Color.Purple);
+			skyBox = new SkyBox(skyBoxEffect, Vector3.Zero, 200, skyBoxTexture);
+			player1 = new Box(basicEffect, new Vector3(0, 0, 20), new Vector3(1, 1, 0.2f), Color.Green);
+			player2 = new Box(basicEffect, new Vector3(0, 0, -20), new Vector3(1, 1, 0.2f), Color.Yellow);
+			hitHelper = new Box(basicEffect, new Vector3(0, 0, 20), new Vector3(1, 1, 0.001f), Color.Red);
+
+			shapes = new Shape[5] { ball, skyBox, player1, player2, hitHelper };
 
 			// Cube data - four vertices for each face, put into index buffer as 12 triangles
 			VertexPositionNormalTexture[] cubeVertices = new VertexPositionNormalTexture[24]
@@ -218,7 +219,6 @@ namespace Project3
 
             boundingBoxIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), boundingBoxIndices.Length, BufferUsage.WriteOnly);
             boundingBoxIndexBuffer.SetData<short>(boundingBoxIndices);
-
         }
 
 		/// <summary>
@@ -261,15 +261,15 @@ namespace Project3
             player1X = 0;
 
             // Player 1 Y movement - Up and Down arrow keys
-            if (keyboard.IsKeyDown(Keys.Up) && player1.getPosition().Y < boundingBoxWorld.M22 - player1.getShapeDimensions().Y)
+            if (keyboard.IsKeyDown(Keys.Up) && player1.Position.Y < boundingBoxWorld.M22 - player1.Scale.Y)
                 player1Y += 0.3f;
-            if (keyboard.IsKeyDown(Keys.Down) && player1.getPosition().Y > -boundingBoxWorld.M22 + player1.getShapeDimensions().Y)
+            if (keyboard.IsKeyDown(Keys.Down) && player1.Position.Y > -boundingBoxWorld.M22 + player1.Scale.Y)
                 player1Y -= 0.3f;
 
             // Player 1 Z movement - Right and Left arrow keys
-            if (keyboard.IsKeyDown(Keys.Right) && player1.getPosition().X < boundingBoxWorld.M11 - player1.getShapeDimensions().X)
+            if (keyboard.IsKeyDown(Keys.Right) && player1.Position.X < boundingBoxWorld.M11 - player1.Scale.X)
                 player1X += 0.3f;
-            if (keyboard.IsKeyDown(Keys.Left) && player1.getPosition().X > -boundingBoxWorld.M11 + player1.getShapeDimensions().X)
+            if (keyboard.IsKeyDown(Keys.Left) && player1.Position.X > -boundingBoxWorld.M11 + player1.Scale.X)
                 player1X -= 0.3f;
 
             // Temporary fix
@@ -290,9 +290,9 @@ namespace Project3
         // Made to check if the ball hits a wall so that we can implement some sort of color
         private void checkBallBounds()
         {
-            Vector3 currentPosition = hitHelper.getPosition();
+            Vector3 currentPosition = hitHelper.Position;
             //Vector3 test = hitHelper.detectCollision(ball, ball.getPosition(), ball.getVelocity());
-            hitHelper.setPosition(hitHelper.detectCollision(ball, ball.getPosition(), ball.getVelocity()) - currentPosition);
+            hitHelper.setPosition(hitHelper.detectCollision(ball, ball.Position, ball.Position) - currentPosition);
         }
 
 		/// <summary>
@@ -314,28 +314,20 @@ namespace Project3
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // Set VertexBuffer and IndexBuffer for SkyBox and Paddles
-            GraphicsDevice.SetVertexBuffer(vertexBuffer);
-			GraphicsDevice.Indices = indexBuffer;
 
-            GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
-            skybox.callDraw(graphics, view, projection, effect, cameraPosition, skyboxTexture);
-            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            
-            // Draw paddles
-            player1.callDraw(graphics, view, projection, Color.Green);
-            player2.callDraw(graphics, view, projection, Color.Yellow);
-            hitHelper.callDraw(graphics, view, projection, Color.Red);
+			foreach (Shape shape in shapes)
+			{
+				GraphicsDevice.SetVertexBuffer(vertexBuffer);
+				GraphicsDevice.Indices = indexBuffer;
 
-            // Draw ball
-            ball.callDraw(graphics, view, projection, Color.Purple);
+				if (shape.Effect is BasicEffect)
+					shape.Draw((BasicEffect) shape.Effect, cameraPosition, projection);
+				else
+					shape.Draw(shape.Effect, cameraPosition, projection);
+			}
 
-
-
-            
-            GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
+			GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
             GraphicsDevice.Indices = boundingBoxIndexBuffer;
-
-            paddleWorld = Matrix.CreateScale(new Vector3(2, 2, 0.25f));
 
             foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
             {

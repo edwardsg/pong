@@ -11,30 +11,25 @@ namespace Project3
 {
     class Ball : Shape
     {
-        SpherePrimitive sphere;
+		private new BasicEffect Effect { get; }
 
-        BasicEffect basicEffect;
-        Matrix world;
+		private Vector3 velocity;
 
-        Vector3 position;
-        Vector3 velocity;
+		public Color Color { get; }
 
-        public Ball(GraphicsDeviceManager graphics, Vector3 position, Vector3 velocity)
+        private SpherePrimitive sphere;
+
+        public Ball(BasicEffect effect, Vector3 position, Vector3 velocity, Color color) : base(effect, position)
         {
-            basicEffect = new BasicEffect(graphics.GraphicsDevice);
-            sphere = new SpherePrimitive(graphics.GraphicsDevice);
-            this.position = position;
-            this.velocity = velocity;
+			Effect = effect;
+			Color = color;
+			this.velocity = velocity;
+			sphere = new SpherePrimitive(effect.GraphicsDevice);
         }
 
         public void setPosition(Vector3 update)
         {
-            position += update;
-        }
-
-        public Vector3 getPosition()
-        {
-            return position;
+            Position += update;
         }
 
         public void setVelocity(Vector3 update)
@@ -42,39 +37,34 @@ namespace Project3
             velocity += update;
         }
 
-        public Vector3 getVelocity()
-        {
-            return velocity;
-        }
-
         public void UpdateBall(float timePassed, Box player1, Box player2, Matrix boundingBoxWorld)
         {
-            position += velocity * timePassed;
+			Position += velocity * timePassed;
             
             // If ball is at the X bounds of the box at the side with player 1
-            if (position.Z > boundingBoxWorld.M33 - player1.getShapeDimensions().Z)
-                checkPlayer(player1.getPosition());
+            if (Position.Z > boundingBoxWorld.M33 - player1.getShapeDimensions().Z)
+                checkPlayer(player1.Position);
 
             // If ball is at the X bounds of the box at the side with player 2
-            if (position.Z < -boundingBoxWorld.M33 + player2.getShapeDimensions().Z)
-                checkPlayer(player2.getPosition());
+            if (Position.Z < -boundingBoxWorld.M33 + player2.getShapeDimensions().Z)
+                checkPlayer(player2.Position);
 
-            if (position.Y > boundingBoxWorld.M22 - 1 || position.Y < -boundingBoxWorld.M22 + 1)
+            if (Position.Y > boundingBoxWorld.M22 - 1 || Position.Y < -boundingBoxWorld.M22 + 1)
                 velocity.Y *= -1;
 
-            if (position.X > boundingBoxWorld.M11 - 1 || position.X < -boundingBoxWorld.M11 + 1)
+            if (Position.X > boundingBoxWorld.M11 - 1 || Position.X < -boundingBoxWorld.M11 + 1)
                 velocity.X *= -1;
         }
 
         private void checkPlayer(Vector3 playerPosition)
         {
-            // If the position of the ball is within the bounds of the position of the paddle
-            if (position.X <= playerPosition.X + 2f && position.X >= playerPosition.X - 2f &&
-                position.Y <= playerPosition.Y + 2f && position.Y >= playerPosition.Y - 2f)
+            // If the base.Position of the ball is within the bounds of the base.Position of the paddle
+            if (Position.X <= playerPosition.X + 2f && Position.X >= playerPosition.X - 2f &&
+                Position.Y <= playerPosition.Y + 2f && Position.Y >= playerPosition.Y - 2f)
             {
-                float xDifference = position.X - playerPosition.X;
-                float yDifference = position.Y - playerPosition.Y;
-                float zDifference = position.Z - playerPosition.Z;
+                float xDifference = Position.X - playerPosition.X;
+                float yDifference = Position.Y - playerPosition.Y;
+                float zDifference = Position.Z - playerPosition.Z;
                 velocity.Normalize();
 
                 velocity += new Vector3(xDifference, yDifference, zDifference);
@@ -86,15 +76,24 @@ namespace Project3
             // Else the ball went out of the bounds and should be reset
             else
             {
-                position = Vector3.Zero;
+                Position = Vector3.Zero;
                 velocity = new Vector3(0, 0, 1f);
             }
         }
 
-        public void callDraw(GraphicsDeviceManager graphics, Matrix view, Matrix projection, Color color)
-        {
-            world = Matrix.CreateScale(1) * Matrix.CreateTranslation(position);
-            DrawShape(graphics, world, view, projection, basicEffect, color, sphere);
-        }
+		public override void Draw(BasicEffect effect, Vector3 cameraPosition, Matrix projection)
+		{
+			effect.World = Matrix.CreateTranslation(Position);
+			effect.View = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
+			effect.Projection = projection;
+			effect.EnableDefaultLighting();
+			effect.DiffuseColor = Color.ToVector3();
+
+			foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+			{
+				pass.Apply();
+				sphere.Draw(effect);
+			}
+		}
     }
 }

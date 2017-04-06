@@ -9,58 +9,43 @@ using System.Threading.Tasks;
 
 namespace Project3
 {
-    class Shape
+    abstract class Shape
     {
-        public Shape()
+		public Effect Effect { get; }
+
+		public Vector3 Position { get; protected set; }
+		public Vector3 Scale { get; protected set; }
+
+        public Shape(Effect effect, Vector3 position)
         {
+			Scale = Vector3.One;
+			Effect = effect;
+			Position = position;
         }
 
-        public void DrawShape(GraphicsDeviceManager graphics, Matrix world, Matrix view, Matrix projection, 
-                              BasicEffect basicEffect, Color color)
-        {
-            foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-                basicEffect.World = world;
-                basicEffect.View = view;
-                basicEffect.Projection = projection;
-                basicEffect.EnableDefaultLighting();
-                basicEffect.DiffuseColor = color.ToVector3();
+		public Shape(Effect effect, Vector3 position, float scale) : this(effect, position)
+		{
+			Scale = new Vector3(scale, scale, scale);
+		}
 
-                graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
-            }
-        }
+		public Shape(Effect effect, Vector3 position, Vector3 scale) : this(effect, position)
+		{
+			Scale = scale;
+		}
 
-        public void DrawShape(GraphicsDeviceManager graphics, Matrix world, Matrix view, Matrix projection,
-                              Effect effect, Vector3 cameraPosition, TextureCube texture)
-        {
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-                effect.Parameters["World"].SetValue(world * Matrix.CreateTranslation(cameraPosition));
-                effect.Parameters["View"].SetValue(view);
-                effect.Parameters["Projection"].SetValue(projection);
-                effect.Parameters["CameraPosition"].SetValue(cameraPosition);
-                effect.Parameters["SkyBoxTexture"].SetValue(texture);
+		public virtual void Draw(Effect effect, Vector3 cameraPosition, Matrix projection)
+		{
+			
+		}
 
-                graphics.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
-            }
-        }
+		public virtual void Draw(BasicEffect effect, Vector3 cameraPosition, Matrix projection)
+		{
+			
+		}
 
-        public void DrawShape(GraphicsDeviceManager graphics, Matrix world, Matrix view, Matrix projection,
-                              BasicEffect basicEffect, Color color, SpherePrimitive sphere)
-        {
-            foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-                basicEffect.World = world;
-                basicEffect.View = view;
-                basicEffect.Projection = projection;
-                basicEffect.EnableDefaultLighting();
-                basicEffect.DiffuseColor = color.ToVector3();
+		public virtual void Update()
+		{
 
-                sphere.Draw(basicEffect);
-            }
-        }
+		}
     }
 }
