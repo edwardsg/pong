@@ -49,17 +49,17 @@ namespace Project3
             return velocity;
         }
 
-        public bool UpdateBall(float timePassed, Box player1, Box player2, Vector3 boundingBoxWorld)
+        public bool UpdateBall(float timePassed, Box player1, Box player2, Box helper, Vector3 boundingBoxWorld)
         {
             position += velocity * timePassed;
             
             // If ball is at the Z bounds of the box at the side with player 1
             if (position.Z > boundingBoxWorld.Z - player1.getShapeDimensions().Z * 2)
-                return checkPlayer(player1.getPosition());
+                return checkPlayer(player1.getPosition(), helper);
 
             // If ball is at the Z bounds of the box at the side with player 2
             if (position.Z < -boundingBoxWorld.Z + player2.getShapeDimensions().Z * 2)
-                return checkPlayer(player2.getPosition());
+                return checkPlayer(player2.getPosition(), helper);
 
             if (position.Y > boundingBoxWorld.Y - radius || position.Y < -boundingBoxWorld.Y + radius)
                 velocity.Y *= -1;
@@ -70,7 +70,7 @@ namespace Project3
             return false;
         }
 
-        private bool checkPlayer(Vector3 playerPosition)
+        private bool checkPlayer(Vector3 playerPosition, Box helper)
         {
             // If the position of the ball is within the bounds of the position of the paddle
             if (position.X <= playerPosition.X + 1f && position.X >= playerPosition.X - 1f &&
@@ -93,6 +93,7 @@ namespace Project3
             {
                 position = Vector3.Zero;
                 velocity = new Vector3(0, 0, 1f);
+                helper.setPosition(new Vector3(0, 0, 20));
                 return false;
             }
         }

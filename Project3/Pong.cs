@@ -282,16 +282,16 @@ namespace Project3
                 player1X *= MathHelper.ToRadians(45);
             }
 
-            if (ball.getVelocity().Z < 0)
-                updateAI();
-
             Vector3 oldPosition = player1.getPosition();
             player1.setPosition(oldPosition + new Vector3(player1X, player1Y, 0));
             float timePassed = gameTime.ElapsedGameTime.Milliseconds / 100f;
-            bool hitPaddle = ball.UpdateBall(timePassed, player1, player2, boundingBoxVector);
+            bool hitPaddle = ball.UpdateBall(timePassed, player1, player2, hitHelper, boundingBoxVector);
 
             if (hitPaddle)
                 checkBallBounds();
+
+            if (ball.getVelocity().Z < 0)
+                updateAI();
 
             base.Update(gameTime);
 		}
@@ -308,7 +308,27 @@ namespace Project3
 
         private void updateAI()
         {
+            // Based on hitHelper position
+            float movement = 0.1f;
 
+            Vector3 playerPosition = player2.getPosition();
+            Vector3 helperPosition = hitHelper.getPosition();
+            if (playerPosition.X < helperPosition.X)
+                playerPosition.X += movement;
+            if (playerPosition.X > helperPosition.X)
+                playerPosition.X -= movement;
+
+            if (playerPosition.Y < helperPosition.Y)
+                playerPosition.Y += movement;
+            if (playerPosition.Y > helperPosition.Y)
+                playerPosition.Y -= movement;
+
+            if (playerPosition.Z < helperPosition.Z)
+                playerPosition.Z += movement;
+            if (playerPosition.Z > helperPosition.Z)
+                playerPosition.Z -= movement;
+
+            player2.setPosition(playerPosition);
         }
 
 		/// <summary>
@@ -350,8 +370,6 @@ namespace Project3
             
             GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
             GraphicsDevice.Indices = boundingBoxIndexBuffer;
-
-            paddleWorld = Matrix.CreateScale(new Vector3(2, 2, 0.25f));
 
             foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
             {
