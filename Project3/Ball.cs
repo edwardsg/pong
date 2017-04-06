@@ -13,6 +13,8 @@ namespace Project3
     {
         SpherePrimitive sphere;
 
+        float radius = 1;
+
         BasicEffect basicEffect;
         Matrix world;
 
@@ -47,40 +49,43 @@ namespace Project3
             return velocity;
         }
 
-        public void UpdateBall(float timePassed, Box player1, Box player2, Matrix boundingBoxWorld)
+        public bool UpdateBall(float timePassed, Box player1, Box player2, Vector3 boundingBoxWorld)
         {
             position += velocity * timePassed;
             
-            // If ball is at the X bounds of the box at the side with player 1
-            if (position.Z > boundingBoxWorld.M33 - player1.getShapeDimensions().Z)
-                checkPlayer(player1.getPosition());
+            // If ball is at the Z bounds of the box at the side with player 1
+            if (position.Z > boundingBoxWorld.Z - player1.getShapeDimensions().Z * 2)
+                return checkPlayer(player1.getPosition());
 
-            // If ball is at the X bounds of the box at the side with player 2
-            if (position.Z < -boundingBoxWorld.M33 + player2.getShapeDimensions().Z)
-                checkPlayer(player2.getPosition());
+            // If ball is at the Z bounds of the box at the side with player 2
+            if (position.Z < -boundingBoxWorld.Z + player2.getShapeDimensions().Z * 2)
+                return checkPlayer(player2.getPosition());
 
-            if (position.Y > boundingBoxWorld.M22 - 1 || position.Y < -boundingBoxWorld.M22 + 1)
+            if (position.Y > boundingBoxWorld.Y - radius || position.Y < -boundingBoxWorld.Y + radius)
                 velocity.Y *= -1;
 
-            if (position.X > boundingBoxWorld.M11 - 1 || position.X < -boundingBoxWorld.M11 + 1)
+            if (position.X > boundingBoxWorld.X - radius || position.X < -boundingBoxWorld.X + radius)
                 velocity.X *= -1;
+
+            return false;
         }
 
-        private void checkPlayer(Vector3 playerPosition)
+        private bool checkPlayer(Vector3 playerPosition)
         {
             // If the position of the ball is within the bounds of the position of the paddle
-            if (position.X <= playerPosition.X + 2f && position.X >= playerPosition.X - 2f &&
-                position.Y <= playerPosition.Y + 2f && position.Y >= playerPosition.Y - 2f)
+            if (position.X <= playerPosition.X + 1f && position.X >= playerPosition.X - 1f &&
+                position.Y <= playerPosition.Y + 1f && position.Y >= playerPosition.Y - 1f)
             {
                 float xDifference = position.X - playerPosition.X;
                 float yDifference = position.Y - playerPosition.Y;
-                float zDifference = position.Z - playerPosition.Z;
                 velocity.Normalize();
 
-                velocity += new Vector3(xDifference, yDifference, zDifference);
+                velocity += new Vector3(xDifference, yDifference, 0);
                 velocity.Normalize();
                 velocity *= 1;
                 velocity.Z *= -1;
+
+                return true;
             }
 
             // Else the ball went out of the bounds and should be reset
@@ -88,6 +93,7 @@ namespace Project3
             {
                 position = Vector3.Zero;
                 velocity = new Vector3(0, 0, 1f);
+                return false;
             }
         }
 

@@ -35,6 +35,7 @@ namespace Project3
         Matrix world;
         Matrix view;
         Matrix projection;
+        float radius = 1; // Subtracted from the actual field to appropriately calculate where the ball should hit
 
         // Player position changes
         float player1Y = 0;
@@ -61,6 +62,7 @@ namespace Project3
         TextureCube skyboxTexture;
         
         Matrix boundingBoxWorld;
+        Vector3 boundingBoxVector; //Vector version of bounding box world
         
         Vector3 ballHitHelper;
         Vector3 ballHitHelperDimensions;
@@ -119,6 +121,7 @@ namespace Project3
             hitHelper = new Box(graphics, new Vector3(0, 0, 20), new Vector3(1, 1, 0.001f));
 
             boundingBoxWorld = Matrix.CreateScale(new Vector3(10, 10, 20));
+            boundingBoxVector = new Vector3(10, 10, 20);
 
             ballHitHelper = new Vector3(-20f, 10f, 0);
             ballHitHelperDimensions = new Vector3(0.001f, 2, 2);
@@ -272,17 +275,23 @@ namespace Project3
             if (keyboard.IsKeyDown(Keys.Left) && player1.getPosition().X > -boundingBoxWorld.M11 + player1.getShapeDimensions().X)
                 player1X -= 0.3f;
 
-            // Temporary fix
+            // Temporary fix; need to limit to arrow keys
             if (keyboard.GetPressedKeys().Length > 1)
             {
                 player1Y *= MathHelper.ToRadians(45);
                 player1X *= MathHelper.ToRadians(45);
             }
 
-            player1.setPosition(new Vector3(player1X, player1Y, 0));
+            if (ball.getVelocity().Z < 0)
+                updateAI();
+
+            Vector3 oldPosition = player1.getPosition();
+            player1.setPosition(oldPosition + new Vector3(player1X, player1Y, 0));
             float timePassed = gameTime.ElapsedGameTime.Milliseconds / 100f;
-            checkBallBounds();
-            ball.UpdateBall(timePassed, player1, player2, boundingBoxWorld);
+            bool hitPaddle = ball.UpdateBall(timePassed, player1, player2, boundingBoxVector);
+
+            if (hitPaddle)
+                checkBallBounds();
 
             base.Update(gameTime);
 		}
@@ -290,9 +299,16 @@ namespace Project3
         // Made to check if the ball hits a wall so that we can implement some sort of color
         private void checkBallBounds()
         {
-            Vector3 currentPosition = hitHelper.getPosition();
-            //Vector3 test = hitHelper.detectCollision(ball, ball.getPosition(), ball.getVelocity());
-            hitHelper.setPosition(hitHelper.detectCollision(ball, ball.getPosition(), ball.getVelocity()) - currentPosition);
+            // Fix the normalizing because that seems weird
+            Vector3 tempPosition = hitHelper.detectCollision(ball.getPosition(), ball.getVelocity());
+            Vector3 normalized = tempPosition;
+            normalized.Normalize();
+            hitHelper.setPosition(tempPosition + normalized);
+        }
+
+        private void updateAI()
+        {
+
         }
 
 		/// <summary>
