@@ -299,11 +299,36 @@ namespace Project3
         // Made to check if the ball hits a wall so that we can implement some sort of color
         private void checkBallBounds()
         {
-            // Fix the normalizing because that seems weird
+            // I don't think I'm doing the offset right. This is to have the hitHelper be on the bounding
+            // box instead of the playing field.
             Vector3 tempPosition = hitHelper.detectCollision(ball.getPosition(), ball.getVelocity());
-            Vector3 normalized = tempPosition;
-            normalized.Normalize();
-            hitHelper.setPosition(tempPosition + normalized);
+            Vector3 offset = vectorFromSigns(tempPosition);
+            tempPosition.Z = offset.Z * 20;
+            
+            hitHelper.setPosition(tempPosition);
+        }
+
+        // Used to get the signs of the position vector for the hitHelper to offset it properly
+        public Vector3 vectorFromSigns(Vector3 tempPosition)
+        {
+            Vector3 offset = Vector3.Zero;
+
+            if (tempPosition.X > 0)
+                offset.X = 1;
+            else if (tempPosition.X < 0)
+                offset.X = -1;
+
+            if (tempPosition.Y > 0)
+                offset.Y = 1;
+            else if (tempPosition.Y < 0)
+                offset.Y = -1;
+
+            if (tempPosition.Z > 0)
+                offset.Z = 1;
+            else if (tempPosition.Z < 0)
+                offset.Z = -1;
+
+            return offset;
         }
 
         private void updateAI()
