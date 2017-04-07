@@ -16,17 +16,21 @@ namespace Project3
 		SpriteBatch spriteBatch;
 
 		// Window size
-		private const int windowWidth = 800; //1600
-		private const int windowHeight = 500; //800
+		private const int windowWidth = 800;
+		private const int windowHeight = 500;
+
+		// Game constants
+		private const float ballSpeed = 20;
+		private const float humanSpeed = 10;
+		private const float aiSpeed = 9;
+
+		private Vector3 boundingBoxScale = new Vector3(10, 10, 20);
+		private Vector3 paddleScale = new Vector3(1, 1, .2f);
+		private Vector3 helperScale = new Vector3(1, 1, .05f);
 
 		// Camera distance from origin, rotation speed
 		private const float cameraDistance = 50;
 		private const float cameraRotateSpeed = 0.002f;
-
-		// Projection
-		public const float viewAngle = .9f;
-		public const float nearPlane = .01f;
-		public const float farPlane = 500;
 
 		private Vector3 cameraPosition;
 		private float cameraYaw = 0;
@@ -34,7 +38,15 @@ namespace Project3
 		public float minPitch = -MathHelper.PiOver2 + 0.3f;
 		public float maxPitch = MathHelper.PiOver2 - 0.3f;
 
-		private Vector3 boundingBoxScale = new Vector3(10, 10, 20);
+		// Projection
+		public const float viewAngle = .9f;
+		public const float nearPlane = .01f;
+		public const float farPlane = 500;
+
+		Ball ball;
+		SkyBox skyBox;
+		Box player1, player2, hitHelper;
+		Shape[] shapes;
 
         private SoundEffect ballBounce;
         private Song backgroundSong;
@@ -45,17 +57,8 @@ namespace Project3
         float player2Y = 0;
         float player2Z = 0;
 
-		Ball ball;
-		SkyBox skyBox;
-		Box player1, player2, hitHelper;
-		Shape[] shapes;
-        //Box boundingBoxShape;
-
-        VertexBuffer vertexBuffer;
-		IndexBuffer indexBuffer;
-
-        VertexBuffer boundingBoxVertexBuffer;
-        IndexBuffer boundingBoxIndexBuffer;
+        VertexBuffer vertexBuffer, boundingBoxVertexBuffer;
+		IndexBuffer indexBuffer, boundingBoxIndexBuffer, crossHairIndexBuffer;
 
         Effect skyBoxEffect;
         BasicEffect basicEffect;
@@ -134,11 +137,11 @@ namespace Project3
 
             ballBounce = Content.Load<SoundEffect>("blip");
 
-            ball = new Ball(basicEffect, Vector3.Zero, Vector3.UnitZ, Color.Purple, ballBounce);
+            ball = new Ball(basicEffect, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.White, ballBounce);
 			skyBox = new SkyBox(skyBoxEffect, Vector3.Zero, 200, skyBoxTexture);
-			player1 = new Box(basicEffect, new Vector3(0, 0, 20), new Vector3(1, 1, 0.2f), Color.Green);
-			player2 = new Box(basicEffect, new Vector3(0, 0, -20), new Vector3(1, 1, 0.2f), Color.Yellow);
-			hitHelper = new Box(basicEffect, new Vector3(0, 0, 20), new Vector3(1, 1, 0.001f), Color.Red);
+			player1 = new Box(basicEffect, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.Green);
+			player2 = new Box(basicEffect, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.Yellow);
+			hitHelper = new Box(basicEffect, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.Red);
             
             backgroundSong = Content.Load<Song>("kickshock");
             MediaPlayer.Play(backgroundSong);
@@ -224,6 +227,11 @@ namespace Project3
 
             boundingBoxIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), boundingBoxIndices.Length, BufferUsage.WriteOnly);
             boundingBoxIndexBuffer.SetData<short>(boundingBoxIndices);
+
+			short[] crosshairIndices = new short[2] { 1, 2 };
+
+			crossHairIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), crosshairIndices.Length, BufferUsage.WriteOnly);
+			crossHairIndexBuffer.SetData<short>(crosshairIndices);
         }
 
 		/// <summary>
@@ -234,6 +242,8 @@ namespace Project3
 		{
 			vertexBuffer.Dispose();
             indexBuffer.Dispose();
+			boundingBoxVertexBuffer.Dispose();
+			boundingBoxIndexBuffer.Dispose();
 		}
 
 		/// <summary>
@@ -262,62 +272,88 @@ namespace Project3
 			else if (keyboard.IsKeyDown(Keys.S) && cameraPitch < maxPitch)
 				cameraPitch += cameraRotateSpeed * milliseconds;
 
-			player1Y = 0;
-			player1X = 0;
+			Vector3 player1Velocity = Vector3.Zero;
+
+			// Player 1 X movement - Right and Left arrow keys
+			if (keyboard.IsKeyDown(Keys.Right) && player1.Position.X < boundingBoxScale.X - player1.Scale.X)
+				player1Velocity.X = 1;
+			else if (keyboard.IsKeyDown(Keys.Left) && player1.Position.X > -boundingBoxScale.X + player1.Scale.X)
+				player1Velocity.X = -1;
 
 			// Player 1 Y movement - Up and Down arrow keys
 			if (keyboard.IsKeyDown(Keys.Up) && player1.Position.Y < boundingBoxScale.Y - player1.Scale.Y)
-				player1Y += 0.2f;
-			if (keyboard.IsKeyDown(Keys.Down) && player1.Position.Y > -boundingBoxScale.Y + player1.Scale.Y)
-				player1Y -= 0.2f;
-
-			// Player 1 Z movement - Right and Left arrow keys
-			if (keyboard.IsKeyDown(Keys.Right) && player1.Position.X < boundingBoxScale.X - player1.Scale.X)
-				player1X += 0.2f;
-			if (keyboard.IsKeyDown(Keys.Left) && player1.Position.X > -boundingBoxScale.X + player1.Scale.X)
-				player1X -= 0.2f;
-
-			// Temporary fix; need to limit to arrow keys
-			if (keyboard.GetPressedKeys().Length > 1)
-			{
-				player1Y *= MathHelper.ToRadians(45);
-				player1X *= MathHelper.ToRadians(45);
-			}
+				player1Velocity.Y = 1;
+			else if (keyboard.IsKeyDown(Keys.Down) && player1.Position.Y > -boundingBoxScale.Y + player1.Scale.Y)
+				player1Velocity.Y = -1;
 			
-			player1.Update(player1.Position + new Vector3(player1X, player1Y, 0));
-			float timePassed = gameTime.ElapsedGameTime.Milliseconds / 100f;
+			float timePassed = milliseconds / 1000;
+
+			if (player1Velocity != Vector3.Zero)
+				player1Velocity = Vector3.Normalize(player1Velocity);
+
+			player1.Velocity = player1Velocity * humanSpeed;
+			player1.Update(timePassed);
+
 			bool hitPaddle = UpdateBall(timePassed);
 
 			if (hitPaddle)
 				checkBallBounds();
 
 			if (ball.Velocity.Z < 0)
-				updateAI();
+				updateAI(timePassed);
 
 			base.Update(gameTime);
 		}
 
 		private bool UpdateBall(float timePassed)
 		{
-			Vector3 position = ball.Position + ball.Velocity * timePassed;
-
-			ball.Update(position);
+			ball.Update(timePassed);
 
 			// If ball is at the Z bounds of the box at the side with player 1
-			if (position.Z > boundingBoxScale.Z - ball.radius)
-				return ball.checkPlayer(player1.Position, hitHelper);
+			if (ball.Position.Z > boundingBoxScale.Z - ball.radius)
+				return checkPlayer(player1);
 
 			// If ball is at the Z bounds of the box at the side with player 2
-			if (position.Z < -boundingBoxScale.Z + ball.radius)
-				return ball.checkPlayer(player2.Position, hitHelper);
+			if (ball.Position.Z < -boundingBoxScale.Z + ball.radius)
+				return checkPlayer(player2);
 
-			if (position.X > boundingBoxScale.X - ball.radius || position.X < -boundingBoxScale.X + ball.radius)
+			if (ball.Position.X > boundingBoxScale.X - ball.radius || ball.Position.X < -boundingBoxScale.X + ball.radius)
 				ball.BounceX();
 
-			if (position.Y > boundingBoxScale.Y - ball.radius || position.Y < -boundingBoxScale.Y + ball.radius)
+			if (ball.Position.Y > boundingBoxScale.Y - ball.radius || ball.Position.Y < -boundingBoxScale.Y + ball.radius)
 				ball.BounceY();
 
 			return false;
+		}
+
+		private bool checkPlayer(Box player)
+		{
+			// If the position of the ball is within the bounds of the position of the paddle
+			if (ball.Position.X <= player.Position.X + 1f && ball.Position.X >= player.Position.X - 1f &&
+				ball.Position.Y <= player.Position.Y + 1f && ball.Position.Y >= player.Position.Y - 1f)
+			{
+				float xDifference = ball.Position.X - player.Position.X;
+				float yDifference = ball.Position.Y - player.Position.Y;
+				Vector3 ballVelocity = Vector3.Normalize(ball.Velocity);
+
+				ballVelocity += new Vector3(xDifference, yDifference, 0);
+				ballVelocity.Normalize();
+				ballVelocity *= ballSpeed;
+				ballVelocity.Z *= -1;
+				ball.Velocity = ballVelocity;
+				ball.Sound.Play();
+
+				return true;
+			}
+
+			// Else the ball went out of the bounds and should be reset
+			else
+			{
+				ball.Position = Vector3.Zero;
+				ball.Velocity = Vector3.UnitZ * ballSpeed;
+				hitHelper.Position = new Vector3(0, 0, 20);
+				return false;
+			}
 		}
 
 		// Made to check if the ball hits a wall so that we can implement some sort of color
@@ -329,7 +365,7 @@ namespace Project3
 			Vector3 offset = vectorFromSigns(tempPosition);
 			tempPosition.Z = offset.Z * 20;
 
-			hitHelper.Update(tempPosition);
+			hitHelper.Position = tempPosition;
 		}
 
 		// Used to get the signs of the position vector for the hitHelper to offset it properly
@@ -355,24 +391,26 @@ namespace Project3
 			return offset;
 		}
 
-		private void updateAI()
+		private void updateAI(float timePassed)
 		{
 			// Based on hitHelper position
-			float movement = 0.1f;
-
-			Vector3 playerPosition = player2.Position;
+			Vector3 player2Velocity = Vector3.Zero;
 			Vector3 helperPosition = hitHelper.Position;
-			if (playerPosition.X < helperPosition.X)
-				playerPosition.X += movement;
-			if (playerPosition.X > helperPosition.X)
-				playerPosition.X -= movement;
+			if (player2.Position.X < helperPosition.X && player2.Position.X < boundingBoxScale.X - player2.Scale.X)
+				player2Velocity.X = 1;
+			if (player2.Position.X > helperPosition.X && player2.Position.X > -boundingBoxScale.X + player2.Scale.X)
+				player2Velocity.X = -1;
 
-			if (playerPosition.Y < helperPosition.Y)
-				playerPosition.Y += movement;
-			if (playerPosition.Y > helperPosition.Y)
-				playerPosition.Y -= movement;
+			if (player2.Position.Y < helperPosition.Y && player2.Position.Y < boundingBoxScale.Y - player2.Scale.Y)
+				player2Velocity.Y = 1;
+			if (player2.Position.Y > helperPosition.Y && player2.Position.Y > -boundingBoxScale.Y + player2.Scale.Y)
+				player2Velocity.Y = -1;
 
-			player2.Update(playerPosition);
+			if (player2Velocity != Vector3.Zero)
+				player2Velocity = Vector3.Normalize(player2Velocity);
+
+			player2.Velocity = player2Velocity * aiSpeed;
+			player2.Update(timePassed);
 		}
 
 		/// <summary>
@@ -405,22 +443,51 @@ namespace Project3
 					shape.Draw(shape.Effect, cameraPosition, projection);
 			}
 
-			GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
-            GraphicsDevice.Indices = boundingBoxIndexBuffer;
-
 			Matrix boundingBoxWorld = Matrix.CreateScale(boundingBoxScale);
+			boundingBoxEffect.World = boundingBoxWorld;
+			boundingBoxEffect.View = view;
+			boundingBoxEffect.Projection = projection;
 
-            foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
+			//boundingBoxEffect.DiffuseColor = Color.Aquamarine.ToVector3();
+			boundingBoxEffect.LightingEnabled = true;
+			boundingBoxEffect.DirectionalLight0.Enabled = true;
+			boundingBoxEffect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(1, 1, 1));
+			boundingBoxEffect.DirectionalLight0.DiffuseColor = Color.MediumVioletRed.ToVector3();
+			boundingBoxEffect.DirectionalLight0.SpecularColor = Color.White.ToVector3();
+			boundingBoxEffect.DirectionalLight1.Enabled = true;
+			boundingBoxEffect.DirectionalLight1.Direction = Vector3.Normalize(new Vector3(-1, -1, -1));
+			boundingBoxEffect.DirectionalLight1.DiffuseColor = Color.MediumVioletRed.ToVector3();
+			boundingBoxEffect.DirectionalLight1.SpecularColor = Color.White.ToVector3();
+
+			GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
+
+			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                boundingBoxEffect.World = boundingBoxWorld;
-                boundingBoxEffect.View = view;
-                boundingBoxEffect.Projection = projection;
+				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
+			}
 
-                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 24);
-            }
+			GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
+			GraphicsDevice.Indices = boundingBoxIndexBuffer;
 
-            base.Draw(gameTime);
+			boundingBoxEffect.LightingEnabled = false;
+
+			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
+			{
+				pass.Apply();
+				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 24);
+			}
+
+			//boundingBoxEffect.World = Matrix.CreateScale(new Vector3(boundingBoxScale.X, 1, 1)) * Matrix.CreateTranslation(new Vector3(0, ball.Position.Y, ball.Position.Z));
+			//GraphicsDevice.Indices = crossHairIndexBuffer;
+
+			//foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
+			//{
+			//	pass.Apply();
+			//	GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 1);
+			//}
+
+			base.Draw(gameTime);
 		}
     }
 }

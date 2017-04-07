@@ -11,6 +11,13 @@ namespace Project3
     class Box : Shape
     {
         private new BasicEffect Effect { get; }
+
+		private Vector3 velocity;
+		public Vector3 Velocity {
+			get { return velocity; }
+			set { velocity = value; }
+		}
+
 		public Color Color { get; }
         float alphaChange; // For visibility of paddle when in front of the ball
 
@@ -20,16 +27,20 @@ namespace Project3
         Vector3 left = new Vector3(-10, 0, 0);
         Vector3 top = new Vector3(0, 10, 0);
         Vector3 bottom = new Vector3(0, -10, 0);
-		
-        Vector3 shapeDimensions;
 
         public Box(BasicEffect effect, Vector3 position, Vector3 scale, Color color) : base(effect, position, scale)
         {
+			velocity = Vector3.Zero;
 			Color = color;
-        }
+		}
 
-        // To do recursive computations for the position of the AI
-        public Vector3 detectCollision(Vector3 ballPosition, Vector3 ballVelocity)
+		public override void Update(float timePassed)
+		{
+			Position += velocity * timePassed;
+		}
+
+		// To do recursive computations for the position of the AI
+		public Vector3 detectCollision(Vector3 ballPosition, Vector3 ballVelocity)
         {
 			Vector3 collision = Vector3.Zero;
 

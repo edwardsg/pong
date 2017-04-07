@@ -13,7 +13,7 @@ namespace Project3
     {
 		public Effect Effect { get; }
 
-		public Vector3 Position { get; protected set; }
+		public Vector3 Position { get; set; }
 		public Vector3 Scale { get; protected set; }
 
         public Shape(Effect effect, Vector3 position)
@@ -43,9 +43,8 @@ namespace Project3
 			
 		}
 
-		public virtual void Update(Vector3 position)
+		public virtual void Update(float timePassed)
 		{
-			Position = position;
 		}
     }
 }
