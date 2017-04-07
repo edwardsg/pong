@@ -65,6 +65,10 @@ namespace Project3
         BasicEffect boundingBoxEffect;
         TextureCube skyBoxTexture;
 
+        Texture2D player1Texture;
+        Texture2D player2Texture;
+        Texture2D helperTexture;
+
 		Vector3 ballHitHelper;
         Vector3 ballHitHelperDimensions;
 
@@ -136,13 +140,17 @@ namespace Project3
             skyBoxTexture = Content.Load<TextureCube>("Islands");
             boundingBoxEffect = new BasicEffect(GraphicsDevice);
 
+            player1Texture = Content.Load<Texture2D>("player1Paddle");
+            player2Texture = Content.Load<Texture2D>("player2Paddle");
+            helperTexture = Content.Load<Texture2D>("shadow");
+
             ballBounce = Content.Load<SoundEffect>("blip");
 
             ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.White, ballBounce);
 			skyBox = new SkyBox(GraphicsDevice, Vector3.Zero, 200, skyBoxTexture, skyBoxEffect);
-			player1 = new Box(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.Green);
-			player2 = new Box(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.Yellow);
-			hitHelper = new Box(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.Red);
+			player1 = new Box(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.White, player1Texture);
+			player2 = new Box(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.White, player2Texture);
+			hitHelper = new Box(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.White, helperTexture);
             
             backgroundSong = Content.Load<Song>("kickshock");
             MediaPlayer.Play(backgroundSong);

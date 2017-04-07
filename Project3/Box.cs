@@ -17,6 +17,8 @@ namespace Project3
 		}
 
 		public Color Color { get; }
+        public Texture2D Texture { get; }
+
         float alphaChange; // For visibility of paddle when in front of the ball
 
         Vector3 front = new Vector3(0, 0, 20);
@@ -26,11 +28,12 @@ namespace Project3
         Vector3 top = new Vector3(0, 10, 0);
         Vector3 bottom = new Vector3(0, -10, 0);
 
-        public Box(GraphicsDevice device, Vector3 position, Vector3 scale, Color color) : base(device, position, scale)
+        public Box(GraphicsDevice device, Vector3 position, Vector3 scale, Color color, Texture2D texture) : base(device, position, scale)
         {
 			velocity = Vector3.Zero;
 			Color = color;
 			Effect = new BasicEffect(GraphicsDevice);
+            Texture = texture;
 		}
 
 		public override void Update(float timePassed)
@@ -138,6 +141,8 @@ namespace Project3
 			Effect.Projection = projection;
 			Effect.EnableDefaultLighting();
 			Effect.DiffuseColor = Color.ToVector3();
+            Effect.Texture = Texture;
+            Effect.TextureEnabled = true;
 
 			GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
@@ -146,6 +151,8 @@ namespace Project3
 				pass.Apply();
 				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
 			}
-		}
+
+            Effect.TextureEnabled = false;
+        }
 	}
 }
