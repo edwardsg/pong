@@ -10,151 +10,134 @@ namespace Project3
 {
     class Box : Shape
     {
-        BasicEffect basicEffect;
-        Matrix world;
+        private new BasicEffect Effect { get; }
+		public Color Color { get; }
         float alphaChange; // For visibility of paddle when in front of the ball
-        float radius = 1;
 
-        Vector3 front = new Vector3(0, 0, 20 - 1);
-        Vector3 back = new Vector3(0, 0, -20 + 1);
-        Vector3 right = new Vector3(10 - 1, 0, 0);
-        Vector3 left = new Vector3(-10 + 1, 0, 0);
-        Vector3 top = new Vector3(0, 10 - 1, 0);
-        Vector3 bottom = new Vector3(0, -10 + 1, 0);
-
-        Vector3 position;
+        Vector3 front = new Vector3(0, 0, 20);
+        Vector3 back = new Vector3(0, 0, -20);
+        Vector3 right = new Vector3(10, 0, 0);
+        Vector3 left = new Vector3(-10, 0, 0);
+        Vector3 top = new Vector3(0, 10, 0);
+        Vector3 bottom = new Vector3(0, -10, 0);
+		
         Vector3 shapeDimensions;
 
-        public Box(GraphicsDeviceManager graphics, Vector3 position, Vector3 shapeDimensions)
+        public Box(BasicEffect effect, Vector3 position, Vector3 scale, Color color) : base(effect, position, scale)
         {
-            basicEffect = new BasicEffect(graphics.GraphicsDevice);
-            this.position = position;
-            this.shapeDimensions = shapeDimensions;
-        }
-
-        public void setPosition(Vector3 update)
-        {
-            position = update;
-        }
-
-        public Vector3 getPosition()
-        {
-            return position;
-        }
-
-        public void setShapeDimensions(Vector3 dimensions)
-        {
-            shapeDimensions = dimensions;
-        }
-
-        public Vector3 getShapeDimensions()
-        {
-            return shapeDimensions;
+			Color = color;
         }
 
         // To do recursive computations for the position of the AI
         public Vector3 detectCollision(Vector3 ballPosition, Vector3 ballVelocity)
         {
-            Vector3 collision = Vector3.Zero;
+			Vector3 collision = Vector3.Zero;
 
-            // Case where need to check if ball hits plane
-            float temp = Vector3.Dot(-Vector3.UnitZ, ballVelocity);
-            if (Vector3.Dot(-Vector3.UnitZ, ballVelocity) < 0)
-            {
-                float time = (front.Z - ballPosition.Z) / ballVelocity.Z;
-                collision = ballPosition + ballVelocity * time;
+			// Case where need to check if ball hits plane
+			float temp = Vector3.Dot(-Vector3.UnitZ, ballVelocity);
+			if (Vector3.Dot(-Vector3.UnitZ, ballVelocity) < 0)
+			{
+				float time = (front.Z - ballPosition.Z) / ballVelocity.Z;
+				collision = ballPosition + ballVelocity * time;
 
-                if (withinBounds(collision))
-                    return collision;
-            }
+				if (withinBounds(collision))
+					return collision;
+			}
 
-            if (Vector3.Dot(Vector3.UnitZ, ballVelocity) < 0)
-            {
-                float time = (back.Z - ballPosition.Z) / ballVelocity.Z;
-                collision = ballPosition + ballVelocity * time;
+			if (Vector3.Dot(Vector3.UnitZ, ballVelocity) < 0)
+			{
+				float time = (back.Z - ballPosition.Z) / ballVelocity.Z;
+				collision = ballPosition + ballVelocity * time;
 
-                if (withinBounds(collision))
-                    return collision;
-            }
+				if (withinBounds(collision))
+					return collision;
+			}
 
-            // If the x plane normal dot product with the ball velocity is negative
-            if (Vector3.Dot(-Vector3.UnitX, ballVelocity) < 0)
-            {
-                float time = (right.X - ballPosition.X) / ballVelocity.X;
-                collision = ballPosition + ballVelocity * time;
+			// If the x plane normal dot product with the ball velocity is negative
+			if (Vector3.Dot(-Vector3.UnitX, ballVelocity) < 0)
+			{
+				float time = (right.X - ballPosition.X) / ballVelocity.X;
+				collision = ballPosition + ballVelocity * time;
 
-                if (withinBounds(collision))
-                {
-                    ballVelocity.X *= -1;
-                    return detectCollision(collision, ballVelocity);
-                }
-            }
+				if (withinBounds(collision))
+				{
+					ballVelocity.X *= -1;
+					return detectCollision(collision, ballVelocity);
+				}
+			}
 
-            if (Vector3.Dot(Vector3.UnitX, ballVelocity) < 0)
-            {
-                float time = (left.X - ballPosition.X) / ballVelocity.X;
-                collision = ballPosition + ballVelocity * time;
+			if (Vector3.Dot(Vector3.UnitX, ballVelocity) < 0)
+			{
+				float time = (left.X - ballPosition.X) / ballVelocity.X;
+				collision = ballPosition + ballVelocity * time;
 
-                if (withinBounds(collision))
-                {
-                    ballVelocity.X *= -1;
-                    return detectCollision(collision, ballVelocity);
-                }
-            }
+				if (withinBounds(collision))
+				{
+					ballVelocity.X *= -1;
+					return detectCollision(collision, ballVelocity);
+				}
+			}
 
-            // If the y plane normal dot product with the ball velocity is negative
-            if (Vector3.Dot(-Vector3.UnitY, ballVelocity) < 0)
-            {
-                float time = (top.Y - ballPosition.Y) / ballVelocity.Y;
-                collision = ballPosition + ballVelocity * time;
+			// If the y plane normal dot product with the ball velocity is negative
+			if (Vector3.Dot(-Vector3.UnitY, ballVelocity) < 0)
+			{
+				float time = (top.Y - ballPosition.Y) / ballVelocity.Y;
+				collision = ballPosition + ballVelocity * time;
 
-                if (withinBounds(collision))
-                {
-                    ballVelocity.Y *= -1;
-                    return detectCollision(collision, ballVelocity);
-                }
-            }
+				if (withinBounds(collision))
+				{
+					ballVelocity.Y *= -1;
+					return detectCollision(collision, ballVelocity);
+				}
+			}
 
-            if (Vector3.Dot(Vector3.UnitY, ballVelocity) < 0)
-            {
-                float time = (bottom.Y - ballPosition.Y) / ballVelocity.Y;
-                collision = ballPosition + ballVelocity * time;
+			if (Vector3.Dot(Vector3.UnitY, ballVelocity) < 0)
+			{
+				float time = (bottom.Y - ballPosition.Y) / ballVelocity.Y;
+				collision = ballPosition + ballVelocity * time;
 
-                if (withinBounds(collision))
-                {
-                    ballVelocity.Y *= -1;
-                    return detectCollision(collision, ballVelocity);
-                }
-            }
-            
-            return collision;
-        }
+				if (withinBounds(collision))
+				{
+					ballVelocity.Y *= -1;
+					return detectCollision(collision, ballVelocity);
+				}
+			}
+
+			return collision;
+		}
 
         private bool withinBounds(Vector3 collision)
         {
-            // Put radius back in
-            if (collision.Z > front.Z || collision.Z < back.Z)
-                return false;
-            if (collision.X > right.X || collision.X < left.X)
-                return false;
-            if (collision.Y > top.Y || collision.Y < bottom.Y)
-                return false;
-            return true;
-        }
+			// Put radius back in
+			if (collision.Z > front.Z || collision.Z < back.Z)
+				return false;
+			if (collision.X > right.X || collision.X < left.X)
+				return false;
+			if (collision.Y > top.Y || collision.Y < bottom.Y)
+				return false;
+			return true;
+		}
 
-        // Calls drawing method for shape using BasicEffect
-        public void callDraw(GraphicsDeviceManager graphics, Matrix view, Matrix projection, Color color)
-        {
-            world = Matrix.CreateScale(shapeDimensions) * Matrix.CreateTranslation(position);
-            DrawShape(graphics, world, view, projection, basicEffect, color);
-        }
+		public override void Draw(BasicEffect effect, Vector3 cameraPosition, Matrix projection)
+		{
+			GraphicsDevice device = effect.GraphicsDevice;
 
-        // Calls drawing method for shape using Effect
-        public void callDraw(GraphicsDeviceManager graphics, Matrix view, Matrix projection, Effect effect, Vector3 cameraPosition,
-                             TextureCube texture)
-        {
-            world = Matrix.CreateScale(shapeDimensions) * Matrix.CreateTranslation(cameraPosition);
-            DrawShape(graphics, world, view, projection, effect, cameraPosition, texture);
-        }
-    }
+			Matrix world = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Position);
+			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
+
+			effect.World = world;
+			effect.View = view;
+			effect.Projection = projection;
+			effect.EnableDefaultLighting();
+			effect.DiffuseColor = Color.ToVector3();
+
+			device.RasterizerState = RasterizerState.CullCounterClockwise;
+
+			foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+			{
+				pass.Apply();
+				device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
+			}
+		}
+	}
 }

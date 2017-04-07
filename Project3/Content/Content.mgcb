@@ -55,21 +55,3 @@
 /processorParam:TextureFormat=Compressed
 /build:Islands.dds
 
-#begin thundercats.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:thundercats.wav
-
-#begin kickshock.mp3
-/importer:Mp3Importer
-/processor:SongProcessor
-/processorParam:Quality=Best
-/build:kickshock.mp3
-
-#begin blip.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:blip.wav
-

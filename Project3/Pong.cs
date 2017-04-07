@@ -1,8 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Media;
 using Primitives;
 
 namespace Project3
@@ -24,9 +22,9 @@ namespace Project3
 		private const float cameraRotateSpeed = 0.002f;
 
 		// Projection
-		private const float viewAngle = .9f;
-		private const float nearPlane = .01f;
-		private const float farPlane = 500;
+		public const float viewAngle = .9f;
+		public const float nearPlane = .01f;
+		public const float farPlane = 500;
 
 		private Vector3 cameraPosition;
 		private float cameraYaw = 0;
@@ -34,13 +32,7 @@ namespace Project3
 		public float minPitch = -MathHelper.PiOver2 + 0.3f;
 		public float maxPitch = MathHelper.PiOver2 - 0.3f;
 
-        Matrix world;
-        Matrix view;
-        Matrix projection;
-        float radius = 1; // Subtracted from the actual field to appropriately calculate where the ball should hit
-        private SoundEffect ballBounce;
-        private SoundEffect backgroundMusic;
-        private Song backgroundSong;
+		private Vector3 boundingBoxScale = new Vector3(10, 10, 20);
 
         // Player position changes
         float player1Y = 0;
@@ -48,11 +40,10 @@ namespace Project3
         float player2Y = 0;
         float player2Z = 0;
 
-        Ball ball;
-        Box player1;
-        Box player2;
-        Box skybox;
-        Box hitHelper;
+		Ball ball;
+		SkyBox skyBox;
+		Box player1, player2, hitHelper;
+		Shape[] shapes;
         //Box boundingBoxShape;
 
         VertexBuffer vertexBuffer;
@@ -61,15 +52,12 @@ namespace Project3
         VertexBuffer boundingBoxVertexBuffer;
         IndexBuffer boundingBoxIndexBuffer;
 
-        Effect effect;
-        BasicEffect ballEffect;
+        Effect skyBoxEffect;
+        BasicEffect basicEffect;
         BasicEffect boundingBoxEffect;
-        TextureCube skyboxTexture;
-        
-        Matrix boundingBoxWorld;
-        Vector3 boundingBoxVector; //Vector version of bounding box world
-        
-        Vector3 ballHitHelper;
+        TextureCube skyBoxTexture;
+
+		Vector3 ballHitHelper;
         Vector3 ballHitHelperDimensions;
 
 		public Pong()
@@ -97,11 +85,11 @@ namespace Project3
 			graphics.ApplyChanges();
 
 			// Set window title
-			Window.Title = "Space Cadet 3D Ping Pxong";
+			Window.Title = "Space Cadet 3D Ping Pong";
 
-            Vector3[] normals = new Vector3[6]
-            {
-                new Vector3(0, 0, -1),  // Front
+			Vector3[] normals = new Vector3[6]
+			{
+				new Vector3(0, 0, -1),  // Front
                 new Vector3(0, 0, 1),   // Back
                 new Vector3(-1, 0, 0),  // Right
                 new Vector3(1, 0, 0),   // Left
@@ -109,24 +97,15 @@ namespace Project3
                 new Vector3(0, 1, 0)    // Bottom
             };
 
-            Vector3[] planes = new Vector3[6]
-            {
-                new Vector3(0, 0, 20),  // Front
+			Vector3[] planes = new Vector3[6]
+			{
+				new Vector3(0, 0, 20),  // Front
                 new Vector3(0, 0, -20),   // Back
                 new Vector3(10, 0, 0),  // Right
                 new Vector3(-10, 0, 0),   // Left
                 new Vector3(0, 10, 0),  // Top
                 new Vector3(0, -10, 0)    // Bottom
             };
-
-            ball = new Ball(graphics, new Vector3(0, 0, 0), new Vector3(0, 0, 1f));
-            player1 = new Box(graphics, new Vector3(0, 0, 20), new Vector3(1, 1, 0.2f));
-            player2 = new Box(graphics, new Vector3(0, 0, -20), new Vector3(1, 1, 0.2f));
-            skybox = new Box(graphics, new Vector3(0, 0, 0), new Vector3(200, 200, 200));
-            hitHelper = new Box(graphics, new Vector3(0, 0, 20), new Vector3(1, 1, 0.001f));
-
-            boundingBoxWorld = Matrix.CreateScale(new Vector3(10, 10, 20));
-            boundingBoxVector = new Vector3(10, 10, 20);
 
             ballHitHelper = new Vector3(-20f, 10f, 0);
             ballHitHelperDimensions = new Vector3(0.001f, 2, 2);
@@ -143,22 +122,18 @@ namespace Project3
 			// Create a new SpriteBatch, which can be used to draw textures.
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            effect = Content.Load<Effect>("skybox");
-            ballBounce = Content.Load<SoundEffect>("blip");
-            //backgroundMusic = Content.Load<SoundEffect>("kickshock");
-            backgroundSong = Content.Load<Song>("kickshock");
-            MediaPlayer.Play(backgroundSong);
-            MediaPlayer.IsRepeating = true;
-
-            ball.setSound(ballBounce);
-
-            /*SoundEffectInstance soundEffectInstance = backgroundSong.CreateInstance();
-            soundEffectInstance.IsLooped = true;
-            soundEffectInstance.Play();*/
-
-            ballEffect = new BasicEffect(GraphicsDevice);
+            basicEffect = new BasicEffect(GraphicsDevice);
+            skyBoxEffect = Content.Load<Effect>("skybox");
+            skyBoxTexture = Content.Load<TextureCube>("Islands");
             boundingBoxEffect = new BasicEffect(GraphicsDevice);
-            skyboxTexture = Content.Load<TextureCube>("Islands");
+
+			ball = new Ball(basicEffect, Vector3.Zero, Vector3.UnitZ, Color.Purple);
+			skyBox = new SkyBox(skyBoxEffect, Vector3.Zero, 200, skyBoxTexture);
+			player1 = new Box(basicEffect, new Vector3(0, 0, 20), new Vector3(1, 1, 0.2f), Color.Green);
+			player2 = new Box(basicEffect, new Vector3(0, 0, -20), new Vector3(1, 1, 0.2f), Color.Yellow);
+			hitHelper = new Box(basicEffect, new Vector3(0, 0, 20), new Vector3(1, 1, 0.001f), Color.Red);
+
+			shapes = new Shape[5] { ball, skyBox, player1, player2, hitHelper };
 
 			// Cube data - four vertices for each face, put into index buffer as 12 triangles
 			VertexPositionNormalTexture[] cubeVertices = new VertexPositionNormalTexture[24]
@@ -238,7 +213,6 @@ namespace Project3
 
             boundingBoxIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), boundingBoxIndices.Length, BufferUsage.WriteOnly);
             boundingBoxIndexBuffer.SetData<short>(boundingBoxIndices);
-
         }
 
 		/// <summary>
@@ -277,102 +251,118 @@ namespace Project3
 			else if (keyboard.IsKeyDown(Keys.S) && cameraPitch < maxPitch)
 				cameraPitch += cameraRotateSpeed * milliseconds;
 
-            player1Y = 0;
-            player1X = 0;
+			player1Y = 0;
+			player1X = 0;
 
-            // Player 1 Y movement - Up and Down arrow keys
-            if (keyboard.IsKeyDown(Keys.Up) && player1.getPosition().Y < boundingBoxWorld.M22 - player1.getShapeDimensions().Y)
-                player1Y += 0.2f;
-            if (keyboard.IsKeyDown(Keys.Down) && player1.getPosition().Y > -boundingBoxWorld.M22 + player1.getShapeDimensions().Y)
-                player1Y -= 0.2f;
+			// Player 1 Y movement - Up and Down arrow keys
+			if (keyboard.IsKeyDown(Keys.Up) && player1.Position.Y < boundingBoxScale.Y - player1.Scale.Y)
+				player1Y += 0.2f;
+			if (keyboard.IsKeyDown(Keys.Down) && player1.Position.Y > -boundingBoxScale.Y + player1.Scale.Y)
+				player1Y -= 0.2f;
 
-            // Player 1 Z movement - Right and Left arrow keys
-            if (keyboard.IsKeyDown(Keys.Right) && player1.getPosition().X < boundingBoxWorld.M11 - player1.getShapeDimensions().X)
-                player1X += 0.2f;
-            if (keyboard.IsKeyDown(Keys.Left) && player1.getPosition().X > -boundingBoxWorld.M11 + player1.getShapeDimensions().X)
-                player1X -= 0.2f;
+			// Player 1 Z movement - Right and Left arrow keys
+			if (keyboard.IsKeyDown(Keys.Right) && player1.Position.X < boundingBoxScale.X - player1.Scale.X)
+				player1X += 0.2f;
+			if (keyboard.IsKeyDown(Keys.Left) && player1.Position.X > -boundingBoxScale.X + player1.Scale.X)
+				player1X -= 0.2f;
 
-            // Temporary fix; need to limit to arrow keys
-            if (keyboard.GetPressedKeys().Length > 1)
-            {
-                player1Y *= MathHelper.ToRadians(45);
-                player1X *= MathHelper.ToRadians(45);
-            }
+			// Temporary fix; need to limit to arrow keys
+			if (keyboard.GetPressedKeys().Length > 1)
+			{
+				player1Y *= MathHelper.ToRadians(45);
+				player1X *= MathHelper.ToRadians(45);
+			}
+			
+			player1.Update(player1.Position + new Vector3(player1X, player1Y, 0));
+			float timePassed = gameTime.ElapsedGameTime.Milliseconds / 100f;
+			bool hitPaddle = UpdateBall(timePassed);
 
-            Vector3 oldPosition = player1.getPosition();
-            player1.setPosition(oldPosition + new Vector3(player1X, player1Y, 0));
-            float timePassed = gameTime.ElapsedGameTime.Milliseconds / 100f;
-            bool hitPaddle = ball.UpdateBall(timePassed, player1, player2, hitHelper, boundingBoxVector);
+			if (hitPaddle)
+				checkBallBounds();
 
-            if (hitPaddle)
-                checkBallBounds();
+			if (ball.Velocity.Z < 0)
+				updateAI();
 
-            if (ball.getVelocity().Z < 0)
-                updateAI();
-
-            base.Update(gameTime);
+			base.Update(gameTime);
 		}
 
-        // Made to check if the ball hits a wall so that we can implement some sort of color
-        private void checkBallBounds()
+		private bool UpdateBall(float timePassed)
+		{
+			Vector3 position = ball.Position + ball.Velocity * timePassed;
+
+			ball.Update(position);
+
+			// If ball is at the Z bounds of the box at the side with player 1
+			if (position.Z > boundingBoxScale.Z - ball.radius)
+				return ball.checkPlayer(player1.Position, hitHelper);
+
+			// If ball is at the Z bounds of the box at the side with player 2
+			if (position.Z < -boundingBoxScale.Z + ball.radius)
+				return ball.checkPlayer(player2.Position, hitHelper);
+
+			if (position.X > boundingBoxScale.X - ball.radius || position.X < -boundingBoxScale.X + ball.radius)
+				ball.BounceX();
+
+			if (position.Y > boundingBoxScale.Y - ball.radius || position.Y < -boundingBoxScale.Y + ball.radius)
+				ball.BounceY();
+
+			return false;
+		}
+
+		// Made to check if the ball hits a wall so that we can implement some sort of color
+		private void checkBallBounds()
         {
-            // I don't think I'm doing the offset right. This is to have the hitHelper be on the bounding
-            // box instead of the playing field.
-            Vector3 tempPosition = hitHelper.detectCollision(ball.getPosition(), ball.getVelocity());
-            Vector3 offset = vectorFromSigns(tempPosition);
-            tempPosition.Z = offset.Z * 20;
-            
-            hitHelper.setPosition(tempPosition);
-            //ballBounce.Play();
-        }
+			// I don't think I'm doing the offset right. This is to have the hitHelper be on the bounding
+			// box instead of the playing field.
+			Vector3 tempPosition = hitHelper.detectCollision(ball.Position, ball.Velocity);
+			Vector3 offset = vectorFromSigns(tempPosition);
+			tempPosition.Z = offset.Z * 20;
 
-        // Used to get the signs of the position vector for the hitHelper to offset it properly
-        public Vector3 vectorFromSigns(Vector3 tempPosition)
-        {
-            Vector3 offset = Vector3.Zero;
+			hitHelper.Update(tempPosition);
+		}
 
-            if (tempPosition.X > 0)
-                offset.X = 1;
-            else if (tempPosition.X < 0)
-                offset.X = -1;
+		// Used to get the signs of the position vector for the hitHelper to offset it properly
+		public Vector3 vectorFromSigns(Vector3 tempPosition)
+		{
+			Vector3 offset = Vector3.Zero;
 
-            if (tempPosition.Y > 0)
-                offset.Y = 1;
-            else if (tempPosition.Y < 0)
-                offset.Y = -1;
+			if (tempPosition.X > 0)
+				offset.X = 1;
+			else if (tempPosition.X < 0)
+				offset.X = -1;
 
-            if (tempPosition.Z > 0)
-                offset.Z = 1;
-            else if (tempPosition.Z < 0)
-                offset.Z = -1;
+			if (tempPosition.Y > 0)
+				offset.Y = 1;
+			else if (tempPosition.Y < 0)
+				offset.Y = -1;
 
-            return offset;
-        }
+			if (tempPosition.Z > 0)
+				offset.Z = 1;
+			else if (tempPosition.Z < 0)
+				offset.Z = -1;
 
-        private void updateAI()
-        {
-            // Based on hitHelper position
-            float movement = 0.1f;
+			return offset;
+		}
 
-            Vector3 playerPosition = player2.getPosition();
-            Vector3 helperPosition = hitHelper.getPosition();
-            if (playerPosition.X < helperPosition.X)
-                playerPosition.X += movement;
-            if (playerPosition.X > helperPosition.X)
-                playerPosition.X -= movement;
+		private void updateAI()
+		{
+			// Based on hitHelper position
+			float movement = 0.1f;
 
-            if (playerPosition.Y < helperPosition.Y)
-                playerPosition.Y += movement;
-            if (playerPosition.Y > helperPosition.Y)
-                playerPosition.Y -= movement;
+			Vector3 playerPosition = player2.Position;
+			Vector3 helperPosition = hitHelper.Position;
+			if (playerPosition.X < helperPosition.X)
+				playerPosition.X += movement;
+			if (playerPosition.X > helperPosition.X)
+				playerPosition.X -= movement;
 
-            if (playerPosition.Z < helperPosition.Z)
-                playerPosition.Z += movement;
-            if (playerPosition.Z > helperPosition.Z)
-                playerPosition.Z -= movement;
+			if (playerPosition.Y < helperPosition.Y)
+				playerPosition.Y += movement;
+			if (playerPosition.Y > helperPosition.Y)
+				playerPosition.Y -= movement;
 
-            player2.setPosition(playerPosition);
-        }
+			player2.Update(playerPosition);
+		}
 
 		/// <summary>
 		/// This is called when the game should draw itself.
@@ -386,33 +376,28 @@ namespace Project3
 			cameraPosition *= cameraDistance;
 
 			// Set up scale, camera direction, and perspective projection
-			world = Matrix.CreateScale(200);
-			view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
-			projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
+			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
+			Matrix projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // Set VertexBuffer and IndexBuffer for SkyBox and Paddles
-            GraphicsDevice.SetVertexBuffer(vertexBuffer);
-			GraphicsDevice.Indices = indexBuffer;
 
-            GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
-            skybox.callDraw(graphics, view, projection, effect, cameraPosition, skyboxTexture);
-            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            
-            // Draw paddles
-            player1.callDraw(graphics, view, projection, Color.Green);
-            player2.callDraw(graphics, view, projection, Color.Yellow);
-            hitHelper.callDraw(graphics, view, projection, Color.Red);
+			foreach (Shape shape in shapes)
+			{
+				GraphicsDevice.SetVertexBuffer(vertexBuffer);
+				GraphicsDevice.Indices = indexBuffer;
 
-            // Draw ball
-            ball.callDraw(graphics, view, projection, Color.Purple);
+				if (shape.Effect is BasicEffect)
+					shape.Draw((BasicEffect) shape.Effect, cameraPosition, projection);
+				else
+					shape.Draw(shape.Effect, cameraPosition, projection);
+			}
 
-
-
-            
-            GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
+			GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
             GraphicsDevice.Indices = boundingBoxIndexBuffer;
+
+			Matrix boundingBoxWorld = Matrix.CreateScale(boundingBoxScale);
 
             foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
             {
