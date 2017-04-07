@@ -310,17 +310,17 @@ namespace Project3
 			ball.Update(timePassed);
 
 			// If ball is at the Z bounds of the box at the side with player 1
-			if (ball.Position.Z > boundingBoxScale.Z - ball.radius)
+			if (ball.Position.Z > boundingBoxScale.Z - Ball.radius)
 				return checkPlayer(player1);
 
 			// If ball is at the Z bounds of the box at the side with player 2
-			if (ball.Position.Z < -boundingBoxScale.Z + ball.radius)
+			if (ball.Position.Z < -boundingBoxScale.Z + Ball.radius)
 				return checkPlayer(player2);
 
-			if (ball.Position.X > boundingBoxScale.X - ball.radius || ball.Position.X < -boundingBoxScale.X + ball.radius)
+			if (ball.Position.X > boundingBoxScale.X - Ball.radius || ball.Position.X < -boundingBoxScale.X + Ball.radius)
 				ball.BounceX();
 
-			if (ball.Position.Y > boundingBoxScale.Y - ball.radius || ball.Position.Y < -boundingBoxScale.Y + ball.radius)
+			if (ball.Position.Y > boundingBoxScale.Y - Ball.radius || ball.Position.Y < -boundingBoxScale.Y + Ball.radius)
 				ball.BounceY();
 
 			return false;

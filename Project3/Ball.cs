@@ -26,7 +26,7 @@ namespace Project3
 
         public SoundEffect Sound { get; }
 
-		public float radius = 1;
+		public const float radius = 1;
 
         public Ball(BasicEffect effect, Vector3 position, Vector3 velocity, Color color, SoundEffect sound) : base(effect, position)
         {

@@ -48,7 +48,7 @@ namespace Project3
 			float temp = Vector3.Dot(-Vector3.UnitZ, ballVelocity);
 			if (Vector3.Dot(-Vector3.UnitZ, ballVelocity) < 0)
 			{
-				float time = (front.Z - ballPosition.Z) / ballVelocity.Z;
+				float time = (front.Z - ballPosition.Z - Ball.radius) / ballVelocity.Z;
 				collision = ballPosition + ballVelocity * time;
 
 				if (withinBounds(collision))
@@ -57,7 +57,7 @@ namespace Project3
 
 			if (Vector3.Dot(Vector3.UnitZ, ballVelocity) < 0)
 			{
-				float time = (back.Z - ballPosition.Z) / ballVelocity.Z;
+				float time = (back.Z - ballPosition.Z + Ball.radius) / ballVelocity.Z;
 				collision = ballPosition + ballVelocity * time;
 
 				if (withinBounds(collision))
@@ -67,7 +67,7 @@ namespace Project3
 			// If the x plane normal dot product with the ball velocity is negative
 			if (Vector3.Dot(-Vector3.UnitX, ballVelocity) < 0)
 			{
-				float time = (right.X - ballPosition.X) / ballVelocity.X;
+				float time = (right.X - ballPosition.X - Ball.radius) / ballVelocity.X;
 				collision = ballPosition + ballVelocity * time;
 
 				if (withinBounds(collision))
@@ -79,7 +79,7 @@ namespace Project3
 
 			if (Vector3.Dot(Vector3.UnitX, ballVelocity) < 0)
 			{
-				float time = (left.X - ballPosition.X) / ballVelocity.X;
+				float time = (left.X - ballPosition.X + Ball.radius) / ballVelocity.X;
 				collision = ballPosition + ballVelocity * time;
 
 				if (withinBounds(collision))
@@ -92,7 +92,7 @@ namespace Project3
 			// If the y plane normal dot product with the ball velocity is negative
 			if (Vector3.Dot(-Vector3.UnitY, ballVelocity) < 0)
 			{
-				float time = (top.Y - ballPosition.Y) / ballVelocity.Y;
+				float time = (top.Y - ballPosition.Y - Ball.radius) / ballVelocity.Y;
 				collision = ballPosition + ballVelocity * time;
 
 				if (withinBounds(collision))
@@ -104,7 +104,7 @@ namespace Project3
 
 			if (Vector3.Dot(Vector3.UnitY, ballVelocity) < 0)
 			{
-				float time = (bottom.Y - ballPosition.Y) / ballVelocity.Y;
+				float time = (bottom.Y - ballPosition.Y + Ball.radius) / ballVelocity.Y;
 				collision = ballPosition + ballVelocity * time;
 
 				if (withinBounds(collision))
