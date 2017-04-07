@@ -80,7 +80,7 @@ namespace Project3
 			GraphicsDevice.SetVertexBuffer(linesVertexBuffer);
 			GraphicsDevice.Indices = linesIndexBuffer;
 
-			Effect.World = Matrix.CreateScale(new Vector3(Scale.X - .1f, Scale.Y - .1f, Scale.Z - .1f));
+			Effect.World = Matrix.CreateScale(Scale.X - .1f, Scale.Y - .1f, Scale.Z - .1f);
 			Effect.LightingEnabled = false;
 
 			foreach (EffectPass pass in Effect.CurrentTechnique.Passes)

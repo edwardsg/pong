@@ -136,8 +136,8 @@ namespace Project3
 
 			skyBox = new SkyBox(GraphicsDevice, Vector3.Zero, 200, skyBoxTexture, skyBoxEffect);
 			boundingBox = new BoundingBox(GraphicsDevice, Vector3.Zero, boundingBoxScale);
-            ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.White, ballBounce);
-			crosshair = new Crosshair(GraphicsDevice, ball.Position, boundingBoxScale);
+            ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.Blue, ballBounce);
+			crosshair = new Crosshair(GraphicsDevice, ball.Position, boundingBoxScale, Color.White);
 			player1 = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.White, player1Texture);
 			player2 = new Paddle(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.White, player2Texture);
 			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z + .1f), helperScale, Color.Green, helperTexture);
