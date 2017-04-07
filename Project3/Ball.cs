@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Primitives;
+using Microsoft.Xna.Framework.Audio;
 
 namespace Project3
 {
@@ -21,12 +22,19 @@ namespace Project3
         Vector3 position;
         Vector3 velocity;
 
+        SoundEffect sound;
+
         public Ball(GraphicsDeviceManager graphics, Vector3 position, Vector3 velocity)
         {
             basicEffect = new BasicEffect(graphics.GraphicsDevice);
             sphere = new SpherePrimitive(graphics.GraphicsDevice);
             this.position = position;
             this.velocity = velocity;
+        }
+
+        public void setSound(SoundEffect sound)
+        {
+            this.sound = sound;
         }
 
         public void setPosition(Vector3 update)
@@ -53,20 +61,32 @@ namespace Project3
         public bool UpdateBall(float timePassed, Box player1, Box player2, Box helper, Vector3 boundingBoxWorld)
         {
             position += velocity * timePassed;
-            
+
             // If ball is at the Z bounds of the box at the side with player 1
             if (position.Z > boundingBoxWorld.Z - radius)
+            {
+                sound.Play(;
                 return checkPlayer(player1.getPosition(), helper);
+            }
 
             // If ball is at the Z bounds of the box at the side with player 2
             if (position.Z < -boundingBoxWorld.Z + radius)
+            {
+                sound.Play();
                 return checkPlayer(player2.getPosition(), helper);
+            }
 
             if (position.Y > boundingBoxWorld.Y - radius || position.Y < -boundingBoxWorld.Y + radius)
+            {
                 velocity.Y *= -1;
+                sound.Play();
+            }
 
             if (position.X > boundingBoxWorld.X - radius || position.X < -boundingBoxWorld.X + radius)
+            {
                 velocity.X *= -1;
+                sound.Play();
+            }
 
             return false;
         }

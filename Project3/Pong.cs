@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 using Primitives;
 
 namespace Project3
@@ -36,6 +38,9 @@ namespace Project3
         Matrix view;
         Matrix projection;
         float radius = 1; // Subtracted from the actual field to appropriately calculate where the ball should hit
+        private SoundEffect ballBounce;
+        private SoundEffect backgroundMusic;
+        private Song backgroundSong;
 
         // Player position changes
         float player1Y = 0;
@@ -139,6 +144,18 @@ namespace Project3
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 
             effect = Content.Load<Effect>("skybox");
+            ballBounce = Content.Load<SoundEffect>("blip");
+            //backgroundMusic = Content.Load<SoundEffect>("kickshock");
+            backgroundSong = Content.Load<Song>("kickshock");
+            MediaPlayer.Play(backgroundSong);
+            MediaPlayer.IsRepeating = true;
+
+            ball.setSound(ballBounce);
+
+            /*SoundEffectInstance soundEffectInstance = backgroundSong.CreateInstance();
+            soundEffectInstance.IsLooped = true;
+            soundEffectInstance.Play();*/
+
             ballEffect = new BasicEffect(GraphicsDevice);
             boundingBoxEffect = new BasicEffect(GraphicsDevice);
             skyboxTexture = Content.Load<TextureCube>("Islands");
@@ -306,6 +323,7 @@ namespace Project3
             tempPosition.Z = offset.Z * 20;
             
             hitHelper.setPosition(tempPosition);
+            //ballBounce.Play();
         }
 
         // Used to get the signs of the position vector for the hitHelper to offset it properly

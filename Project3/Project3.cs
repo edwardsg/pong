@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework.Media;
+using System;
 
 namespace Project3
 {
@@ -16,6 +17,7 @@ namespace Project3
         {
             using (var game = new Pong())
                 game.Run();
+            MediaPlayer.Stop();
         }
     }
 #endif
