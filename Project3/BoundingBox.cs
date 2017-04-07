@@ -1,10 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Project3
 {
@@ -20,7 +15,7 @@ namespace Project3
 		{
 			Color = color;
 
-			// Vertices for creating lines of bounding box
+			// Vertices for creating outlines of bounding box
 			VertexPosition[] boundingBox = new VertexPosition[8]
 			{
 				new VertexPosition(new Vector3(-1, -1, 1)),
@@ -69,7 +64,7 @@ namespace Project3
 			Effect.DirectionalLight1.DiffuseColor = Color.ToVector3();
 			Effect.DirectionalLight1.SpecularColor = Color.White.ToVector3();
 
-			// Show through front faces to only see back faces
+			// Draw box - show through front faces to only see back faces
 			GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
 
 			GraphicsDevice.SetVertexBuffer(VertexBuffer);
@@ -81,7 +76,7 @@ namespace Project3
 				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
 			}
 
-			// Bounding box lines
+			// Draw outlines
 			GraphicsDevice.SetVertexBuffer(linesVertexBuffer);
 			GraphicsDevice.Indices = linesIndexBuffer;
 
