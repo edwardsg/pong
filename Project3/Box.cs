@@ -145,12 +145,15 @@ namespace Project3
             Effect.TextureEnabled = true;
 
 			GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+            GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
-			foreach (EffectPass pass in Effect.CurrentTechnique.Passes)
+            foreach (EffectPass pass in Effect.CurrentTechnique.Passes)
 			{
 				pass.Apply();
 				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
 			}
+
+            GraphicsDevice.BlendState = BlendState.Opaque;
 
             Effect.TextureEnabled = false;
         }
