@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
-using Primitives;
 using System.Text;
 
 namespace Project3
@@ -25,6 +24,10 @@ namespace Project3
 		private const float humanSpeed = 10;
 		private const float aiSpeed = 5;
 
+		// Winning condition
+		private const int winningScore = 3;
+
+		// Object sizes
 		private Vector3 boundingBoxScale = new Vector3(10, 10, 20);
 		private Vector3 paddleScale = new Vector3(1, 1, .2f);
 		private Vector3 helperScale = new Vector3(1, 1, 0);
@@ -33,17 +36,21 @@ namespace Project3
 		private const float cameraDistance = 50;
 		private const float cameraRotateSpeed = 0.002f;
 
+		// Limit vertical rotation
+		public float minPitch = -MathHelper.PiOver2 + 0.3f;
+		public float maxPitch = MathHelper.PiOver2 - 0.3f;
+
+		// Other camera variables
 		private Vector3 cameraPosition;
 		private float cameraYaw = 0;
 		private float cameraPitch = 0;
-		public float minPitch = -MathHelper.PiOver2 + 0.3f;
-		public float maxPitch = MathHelper.PiOver2 - 0.3f;
 
 		// Projection
 		public const float viewAngle = .9f;
 		public const float nearPlane = .01f;
 		public const float farPlane = 500;
 
+		// Game objects
 		private SkyBox skyBox;
 		private BoundingBox boundingBox;
 		private Ball ball;
@@ -51,28 +58,31 @@ namespace Project3
 		private Paddle player1, player2, hitHelper;
 		private Shape[] shapes;
 
+		// Game sounds
         private SoundEffect ballBounce;
         private Song backgroundSong;
         private Song winSong;
         private Song loseSong;
+
+		// Scoreboard things
         private SpriteFont scoreFont;
         private SpriteFont conditionFont;
         int player1Score = 0;
         int player2Score = 0;
-        bool pauseGame = false;
 
-        VertexBuffer crosshairVertexBuffer;
-		IndexBuffer crosshairHIndexBuffer, crosshairVIndexBuffer;
+        bool gamePaused = false;
 
+		// Skybox
         Effect skyBoxEffect;
-        BasicEffect crosshairEffect;
         TextureCube skyBoxTexture;
 
+		// Paddle textures
         Texture2D player1Texture;
         Texture2D player2Texture;
         Texture2D helperTexture;
 
-		bool fPressed = false;
+		// Fullscreen
+		private bool fPressed = false;
 
 		public Pong()
 		{
@@ -113,18 +123,17 @@ namespace Project3
 			// Create a new SpriteBatch, which can be used to draw textures.
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            winSong = Content.Load<Song>("moveforward");
-            loseSong = Content.Load<Song>("sendforthehorses");
+            Song winSong = Content.Load<Song>("moveforward");
+            Song loseSong = Content.Load<Song>("sendforthehorses");
 
 			// BGM
-            backgroundSong = Content.Load<Song>("kickshock");
+            Song backgroundSong = Content.Load<Song>("kickshock");
             MediaPlayer.Play(backgroundSong);
             MediaPlayer.IsRepeating = true;
 
 			// Create game objects
             skyBoxEffect = Content.Load<Effect>("skybox");
             skyBoxTexture = Content.Load<TextureCube>("Islands");
-			crosshairEffect = new BasicEffect(GraphicsDevice);
 
             player1Texture = Content.Load<Texture2D>("player1Paddle");
             player2Texture = Content.Load<Texture2D>("player2Paddle");
@@ -135,13 +144,14 @@ namespace Project3
             ballBounce = Content.Load<SoundEffect>("blip");
 
 			skyBox = new SkyBox(GraphicsDevice, Vector3.Zero, 200, skyBoxTexture, skyBoxEffect);
-			boundingBox = new BoundingBox(GraphicsDevice, Vector3.Zero, boundingBoxScale);
+			boundingBox = new BoundingBox(GraphicsDevice, Vector3.Zero, boundingBoxScale, Color.MediumVioletRed);
             ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.Blue, ballBounce);
 			crosshair = new Crosshair(GraphicsDevice, ball.Position, boundingBoxScale, Color.White);
 			player1 = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.White, player1Texture);
 			player2 = new Paddle(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.White, player2Texture);
 			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z + .1f), helperScale, Color.Green, helperTexture);
 
+			// Single array for all objects
             shapes = new Shape[7] { skyBox, boundingBox, crosshair, ball, player1, player2, hitHelper };			
 		}
 
@@ -172,6 +182,7 @@ namespace Project3
                 if (fPressed == false)
                     fPressed = true;
 
+				// Change resolution depnding on mode
                 if (!graphics.IsFullScreen)
                 {
                     graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
@@ -186,7 +197,7 @@ namespace Project3
                 graphics.ToggleFullScreen();
             }
 
-            if (!pauseGame)
+            if (!gamePaused)
             {
                 float milliseconds = gameTime.ElapsedGameTime.Milliseconds;
 
@@ -226,9 +237,11 @@ namespace Project3
 
                 bool hitPaddle = UpdateBall(timePassed);
 
+				// Bounce ball off paddles
                 if (hitPaddle)
                     checkBallBounds();
 
+				// Move AI if ball moving towards it
                 if (ball.Velocity.Z < 0)
                     updateAI(timePassed);
 
@@ -238,7 +251,7 @@ namespace Project3
 
             if (keyboard.IsKeyDown(Keys.Enter))
             {
-                pauseGame = false;
+                gamePaused = false;
                 player1Score = player2Score = 0;
                 MediaPlayer.Stop();
                 MediaPlayer.Play(backgroundSong);
@@ -247,6 +260,7 @@ namespace Project3
 			base.Update(gameTime);
 		}
 
+		// Move ball and bounce off walls, increase scores
 		private bool UpdateBall(float timePassed)
 		{
 			ball.Update(timePassed);
@@ -254,7 +268,7 @@ namespace Project3
             // If ball is at the Z bounds of the box at the side with player 1
             if (ball.Position.Z > boundingBoxScale.Z - Ball.radius)
             {
-                bool hit = checkPlayer(player1);
+                bool hit = collidePaddle(player1);
                 if (!hit)
                     player2Score += 1;
                 return hit;
@@ -263,12 +277,13 @@ namespace Project3
 			// If ball is at the Z bounds of the box at the side with player 2
 			if (ball.Position.Z < -boundingBoxScale.Z + Ball.radius)
             {
-                bool hit = checkPlayer(player2);
+                bool hit = collidePaddle(player2);
                 if (!hit)
                     player1Score += 1;
                 return hit;
             }
 
+			// Wall bounces
             if (ball.Position.X > boundingBoxScale.X - Ball.radius || ball.Position.X < -boundingBoxScale.X + Ball.radius)
 				ball.BounceX();
 
@@ -278,7 +293,8 @@ namespace Project3
 			return false;
 		}
 
-		private bool checkPlayer(Box player)
+		// Check ball against paddle and bounce
+		private bool collidePaddle(Box player)
 		{
 			// If the position of the ball is within the bounds of the position of the paddle
 			if (ball.Position.X <= player.Position.X + 1f && ball.Position.X >= player.Position.X - 1f &&
@@ -288,6 +304,7 @@ namespace Project3
 				float yDifference = ball.Position.Y - player.Position.Y;
 				Vector3 ballVelocity = Vector3.Normalize(ball.Velocity);
 
+				// Change ball's velocity depending on collision point
 				ballVelocity += new Vector3(xDifference, yDifference, 0);
 				ballVelocity.Normalize();
 				ballVelocity *= ballSpeed;
@@ -299,11 +316,14 @@ namespace Project3
 			}
 			else // Else the ball went out of the bounds and should be reset
 			{
+				// Reset ball
 				ball.Position = Vector3.Zero;
 				ball.Velocity = Vector3.UnitZ * ballSpeed;
 
+				// Reset helper
 				hitHelper.Position = new Vector3(0, 0, boundingBoxScale.Z + .1f);
 
+				// Reset paddles
 				player1.Position = new Vector3(0, 0, player1.Position.Z);
 				player2.Position = new Vector3(0, 0, player2.Position.Z);
 
@@ -407,30 +427,31 @@ namespace Project3
             base.Draw(gameTime);
 		}
 
+		// Check if one player won and display text
         public void checkWin()
         {
-            if (player1Score > 2)
+            if (player1Score == winningScore)
             {
                 string win = "You Win!";
                 spriteBatch.DrawString(conditionFont, win, new Vector2((GraphicsDevice.Viewport.Width / 2) - scoreFont.MeasureString(win).X, (GraphicsDevice.Viewport.Height / 2) - scoreFont.MeasureString(win).Y), Color.White);
-                if (!pauseGame)
+                if (!gamePaused)
                 {
                     MediaPlayer.Stop();
                     MediaPlayer.Play(winSong);
                 }
-                pauseGame = true;
+                gamePaused = true;
             }
 
-            if (player2Score > 2)
+            if (player2Score == winningScore)
             {
                 string lose = "You Lose!";
                 spriteBatch.DrawString(conditionFont, lose, new Vector2((GraphicsDevice.Viewport.Width / 2) - scoreFont.MeasureString(lose).X, (GraphicsDevice.Viewport.Height / 2) - scoreFont.MeasureString(lose).Y), Color.White);
-                if (!pauseGame)
+                if (!gamePaused)
                 {
                     MediaPlayer.Stop();
                     MediaPlayer.Play(loseSong);
                 }
-                pauseGame = true;
+                gamePaused = true;
             }
         }
     }
