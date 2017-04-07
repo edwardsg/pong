@@ -15,15 +15,18 @@ namespace Project3
 		private new BasicEffect Effect { get; }
 
 		private Vector3 velocity;
-		public Vector3 Velocity { get { return velocity; } }
+		public Vector3 Velocity {
+			get { return velocity; }
+			set { velocity = value; }
+		}
 
 		public Color Color { get; }
 
         private SpherePrimitive sphere;
 
-        private SoundEffect Sound { get; }
+        public SoundEffect Sound { get; }
 
-		public float radius = 1;
+		public const float radius = 1;
 
         public Ball(BasicEffect effect, Vector3 position, Vector3 velocity, Color color, SoundEffect sound) : base(effect, position)
         {
@@ -33,6 +36,11 @@ namespace Project3
 			sphere = new SpherePrimitive(effect.GraphicsDevice);
             Sound = sound;
         }
+
+		public override void Update(float timePassed)
+		{
+			Position += velocity * timePassed;
+		}
 
         public void setVelocity(Vector3 update)
         {
@@ -49,35 +57,6 @@ namespace Project3
 		{
 			velocity.Y *= -1;
             Sound.Play();
-		}
-
-        public bool checkPlayer(Vector3 playerPosition, Box helper)
-        {
-			// If the position of the ball is within the bounds of the position of the paddle
-			if (Position.X <= playerPosition.X + 1f && Position.X >= playerPosition.X - 1f &&
-				Position.Y <= playerPosition.Y + 1f && Position.Y >= playerPosition.Y - 1f)
-			{
-				float xDifference = Position.X - playerPosition.X;
-				float yDifference = Position.Y - playerPosition.Y;
-				velocity.Normalize();
-
-				velocity += new Vector3(xDifference, yDifference, 0);
-				velocity.Normalize();
-				velocity *= 1;
-				velocity.Z *= -1;
-                Sound.Play();
-
-				return true;
-			}
-
-			// Else the ball went out of the bounds and should be reset
-			else
-			{
-				Position = Vector3.Zero;
-				velocity = new Vector3(0, 0, 1f);
-				helper.Update(new Vector3(0, 0, 20));
-				return false;
-			}
 		}
 
 		public override void Draw(BasicEffect effect, Vector3 cameraPosition, Matrix projection)
