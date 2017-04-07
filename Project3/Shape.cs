@@ -43,9 +43,9 @@ namespace Project3
 			
 		}
 
-		public virtual void Update()
+		public virtual void Update(Vector3 position)
 		{
-
+			Position = position;
 		}
     }
 }

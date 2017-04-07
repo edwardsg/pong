@@ -14,10 +14,13 @@ namespace Project3
 		private new BasicEffect Effect { get; }
 
 		private Vector3 velocity;
+		public Vector3 Velocity { get { return velocity; } }
 
 		public Color Color { get; }
 
         private SpherePrimitive sphere;
+
+		public float radius = 1;
 
         public Ball(BasicEffect effect, Vector3 position, Vector3 velocity, Color color) : base(effect, position)
         {
@@ -27,59 +30,48 @@ namespace Project3
 			sphere = new SpherePrimitive(effect.GraphicsDevice);
         }
 
-        public void setPosition(Vector3 update)
-        {
-            Position += update;
-        }
-
         public void setVelocity(Vector3 update)
         {
             velocity += update;
         }
 
-        public void UpdateBall(float timePassed, Box player1, Box player2, Matrix boundingBoxWorld)
+		public void BounceX()
+		{
+			velocity.X *= -1;
+		}
+
+		public void BounceY()
+		{
+			velocity.Y *= -1;
+		}
+
+        public bool checkPlayer(Vector3 playerPosition, Box helper)
         {
-			Position += velocity * timePassed;
-            
-            // If ball is at the X bounds of the box at the side with player 1
-            if (Position.Z > boundingBoxWorld.M33 - player1.getShapeDimensions().Z)
-                checkPlayer(player1.Position);
+			// If the position of the ball is within the bounds of the position of the paddle
+			if (Position.X <= playerPosition.X + 1f && Position.X >= playerPosition.X - 1f &&
+				Position.Y <= playerPosition.Y + 1f && Position.Y >= playerPosition.Y - 1f)
+			{
+				float xDifference = Position.X - playerPosition.X;
+				float yDifference = Position.Y - playerPosition.Y;
+				velocity.Normalize();
 
-            // If ball is at the X bounds of the box at the side with player 2
-            if (Position.Z < -boundingBoxWorld.M33 + player2.getShapeDimensions().Z)
-                checkPlayer(player2.Position);
+				velocity += new Vector3(xDifference, yDifference, 0);
+				velocity.Normalize();
+				velocity *= 1;
+				velocity.Z *= -1;
 
-            if (Position.Y > boundingBoxWorld.M22 - 1 || Position.Y < -boundingBoxWorld.M22 + 1)
-                velocity.Y *= -1;
+				return true;
+			}
 
-            if (Position.X > boundingBoxWorld.M11 - 1 || Position.X < -boundingBoxWorld.M11 + 1)
-                velocity.X *= -1;
-        }
-
-        private void checkPlayer(Vector3 playerPosition)
-        {
-            // If the base.Position of the ball is within the bounds of the base.Position of the paddle
-            if (Position.X <= playerPosition.X + 2f && Position.X >= playerPosition.X - 2f &&
-                Position.Y <= playerPosition.Y + 2f && Position.Y >= playerPosition.Y - 2f)
-            {
-                float xDifference = Position.X - playerPosition.X;
-                float yDifference = Position.Y - playerPosition.Y;
-                float zDifference = Position.Z - playerPosition.Z;
-                velocity.Normalize();
-
-                velocity += new Vector3(xDifference, yDifference, zDifference);
-                velocity.Normalize();
-                velocity *= 1;
-                velocity.Z *= -1;
-            }
-
-            // Else the ball went out of the bounds and should be reset
-            else
-            {
-                Position = Vector3.Zero;
-                velocity = new Vector3(0, 0, 1f);
-            }
-        }
+			// Else the ball went out of the bounds and should be reset
+			else
+			{
+				Position = Vector3.Zero;
+				velocity = new Vector3(0, 0, 1f);
+				helper.Update(new Vector3(0, 0, 20));
+				return false;
+			}
+		}
 
 		public override void Draw(BasicEffect effect, Vector3 cameraPosition, Matrix projection)
 		{
