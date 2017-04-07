@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using Primitives;
+using System.Text;
 
 namespace Project3
 {
@@ -51,6 +52,9 @@ namespace Project3
 
         private SoundEffect ballBounce;
         private Song backgroundSong;
+        private SpriteFont font;
+        int player1Score = 0;
+        int player2Score = 0;
 
         // Player position changes
         float player1Y = 0;
@@ -123,6 +127,7 @@ namespace Project3
             player1Texture = Content.Load<Texture2D>("player1Paddle");
             player2Texture = Content.Load<Texture2D>("player2Paddle");
             helperTexture = Content.Load<Texture2D>("shadow");
+            font = Content.Load<SpriteFont>("Arial");
 
             ballBounce = Content.Load<SoundEffect>("blip");
 
@@ -362,8 +367,10 @@ namespace Project3
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Draw(GameTime gameTime)
 		{
-			// Rotate camera around origin
-			Matrix rotation = Matrix.CreateFromYawPitchRoll(cameraYaw, cameraPitch, 0);
+            GraphicsDevice.BlendState = BlendState.Opaque;
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+            // Rotate camera around origin
+            Matrix rotation = Matrix.CreateFromYawPitchRoll(cameraYaw, cameraPitch, 0);
 			cameraPosition = Vector3.Transform(Vector3.Backward * 1f, rotation); //was 1.5f, but I changed it for debugging purposes
 			cameraPosition *= cameraDistance;
 
@@ -402,8 +409,23 @@ namespace Project3
 				pass.Apply();
 				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 1);
 			}
+            
+            spriteBatch = new SpriteBatch(GraphicsDevice);
+            spriteBatch.Begin();
+            var score = new StringBuilder();
+            
+            score.Append("Human Score: ");
+            score.Append(player1Score).AppendLine();
+            spriteBatch.DrawString(font, score.ToString(), new Vector2(16, 16), Color.White);
 
-			base.Draw(gameTime);
+            score.Clear();
+            score.Append("Computer Score: ");
+            score.Append(player2Score).AppendLine();
+            spriteBatch.DrawString(font, score.ToString(), new Vector2(16, 16), Color.White);
+
+            spriteBatch.End();
+
+            base.Draw(gameTime);
 		}
     }
 }
