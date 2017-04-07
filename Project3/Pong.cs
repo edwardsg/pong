@@ -141,8 +141,8 @@ namespace Project3
             skyBoxEffect = Content.Load<Effect>("skybox");
             skyBoxTexture = Content.Load<TextureCube>("Islands");
 
-            player1Texture = Content.Load<Texture2D>("player1Paddle");
-            player2Texture = Content.Load<Texture2D>("player2Paddle");
+            player1Texture = Content.Load<Texture2D>("player1WhiteGradient");
+            player2Texture = Content.Load<Texture2D>("player2WhiteGradient");
             helperTexture = Content.Load<Texture2D>("shadow");
             scoreFont = Content.Load<SpriteFont>("Arial16");
             conditionFont = Content.Load<SpriteFont>("Arial30");
@@ -153,8 +153,8 @@ namespace Project3
 			boundingBox = new BoundingBox(GraphicsDevice, Vector3.Zero, boundingBoxScale, Color.MediumVioletRed);
             ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.Blue, ballBounce);
 			crosshair = new Crosshair(GraphicsDevice, ball.Position, boundingBoxScale, Color.White);
-			player1 = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.White, player1Texture);
-			player2 = new Paddle(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.White, player2Texture);
+			player1 = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.Yellow, player1Texture);
+			player2 = new Paddle(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.Coral, player2Texture);
 			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z + .1f), helperScale, Color.Green, helperTexture);
 
 			// Single array for all objects
