@@ -64,6 +64,9 @@ namespace Project3
         BasicEffect basicEffect;
         BasicEffect boundingBoxEffect;
         TextureCube skyBoxTexture;
+        Texture2D player1Texture;
+        Texture2D player2Texture;
+        Texture2D helperTexture;
 
 		Vector3 ballHitHelper;
         Vector3 ballHitHelperDimensions;
@@ -133,15 +136,18 @@ namespace Project3
             basicEffect = new BasicEffect(GraphicsDevice);
             skyBoxEffect = Content.Load<Effect>("skybox");
             skyBoxTexture = Content.Load<TextureCube>("Islands");
+            player1Texture = Content.Load<Texture2D>("player1Paddle");
+            player2Texture = Content.Load<Texture2D>("player2Paddle");
+            helperTexture = Content.Load<Texture2D>("shadow");
             boundingBoxEffect = new BasicEffect(GraphicsDevice);
 
-            ballBounce = Content.Load<SoundEffect>("blip");
+            ballBounce = Content.Load<SoundEffect>("womp");
 
             ball = new Ball(basicEffect, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.White, ballBounce);
 			skyBox = new SkyBox(skyBoxEffect, Vector3.Zero, 200, skyBoxTexture);
-			player1 = new Box(basicEffect, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.Green);
-			player2 = new Box(basicEffect, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.Yellow);
-			hitHelper = new Box(basicEffect, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.Red);
+			player1 = new Box(basicEffect, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.White, player1Texture);
+			player2 = new Box(basicEffect, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.White, player2Texture);
+			hitHelper = new Box(basicEffect, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.White, helperTexture);
             
             backgroundSong = Content.Load<Song>("kickshock");
             MediaPlayer.Play(backgroundSong);
@@ -363,7 +369,8 @@ namespace Project3
 			// box instead of the playing field.
 			Vector3 tempPosition = hitHelper.detectCollision(ball.Position, ball.Velocity);
 			Vector3 offset = vectorFromSigns(tempPosition);
-			tempPosition.Z = offset.Z * 20;
+		    tempPosition.Z = offset.Z * 20;
+            Vector3.Clamp(tempPosition, -boundingBoxScale, boundingBoxScale);
 
 			hitHelper.Position = tempPosition;
 		}
@@ -372,16 +379,6 @@ namespace Project3
 		public Vector3 vectorFromSigns(Vector3 tempPosition)
 		{
 			Vector3 offset = Vector3.Zero;
-
-			if (tempPosition.X > 0)
-				offset.X = 1;
-			else if (tempPosition.X < 0)
-				offset.X = -1;
-
-			if (tempPosition.Y > 0)
-				offset.Y = 1;
-			else if (tempPosition.Y < 0)
-				offset.Y = -1;
 
 			if (tempPosition.Z > 0)
 				offset.Z = 1;
@@ -478,16 +475,16 @@ namespace Project3
 				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 24);
 			}
 
-			//boundingBoxEffect.World = Matrix.CreateScale(new Vector3(boundingBoxScale.X, 1, 1)) * Matrix.CreateTranslation(new Vector3(0, ball.Position.Y, ball.Position.Z));
-			//GraphicsDevice.Indices = crossHairIndexBuffer;
+            boundingBoxEffect.World = Matrix.CreateScale(new Vector3(boundingBoxScale.X, 1, 1)) * Matrix.CreateTranslation(new Vector3(0, ball.Position.Y, ball.Position.Z));
+            GraphicsDevice.Indices = crossHairIndexBuffer;
 
-			//foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
-			//{
-			//	pass.Apply();
-			//	GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 1);
-			//}
+            foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 1);
+            }
 
-			base.Draw(gameTime);
+            base.Draw(gameTime);
 		}
     }
 }
