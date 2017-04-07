@@ -2,6 +2,12 @@
  * Shaelyn Divins and Gabriel Edwards
  * Dr. Barry Wittman
  * 2017-04-07
+ * 
+ * Background music and sound effects gotten from www.incompetech.com and www.wavsource.com
+ * Background Music: Kick Shock
+ * Win Music: Move Forward
+ * Lose Music: Send for the Horses
+ * Ball Bounce Sound: Blip
  */
 
 using Microsoft.Xna.Framework;
