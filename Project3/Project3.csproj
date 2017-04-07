@@ -41,6 +41,7 @@
     <Compile Include="Ball.cs" />
     <Compile Include="BoundingBox.cs" />
     <Compile Include="Box.cs" />
+    <Compile Include="Crosshair.cs" />
     <Compile Include="GeometricPrimitive.cs" />
     <Compile Include="Paddle.cs" />
     <Compile Include="Pong.cs" />

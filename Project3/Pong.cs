@@ -47,6 +47,7 @@ namespace Project3
 		private SkyBox skyBox;
 		private BoundingBox boundingBox;
 		private Ball ball;
+		private Crosshair crosshair;
 		private Paddle player1, player2, hitHelper;
 		private Shape[] shapes;
 
@@ -63,7 +64,7 @@ namespace Project3
 		IndexBuffer crosshairHIndexBuffer, crosshairVIndexBuffer;
 
         Effect skyBoxEffect;
-        BasicEffect boundingBoxEffect;
+        BasicEffect crosshairEffect;
         TextureCube skyBoxTexture;
 
         Texture2D player1Texture;
@@ -122,7 +123,7 @@ namespace Project3
 			// Create game objects
             skyBoxEffect = Content.Load<Effect>("skybox");
             skyBoxTexture = Content.Load<TextureCube>("Islands");
-            boundingBoxEffect = new BasicEffect(GraphicsDevice);
+			crosshairEffect = new BasicEffect(GraphicsDevice);
 
             player1Texture = Content.Load<Texture2D>("player1Paddle");
             player2Texture = Content.Load<Texture2D>("player2Paddle");
@@ -134,32 +135,12 @@ namespace Project3
 			skyBox = new SkyBox(GraphicsDevice, Vector3.Zero, 200, skyBoxTexture, skyBoxEffect);
 			boundingBox = new BoundingBox(GraphicsDevice, Vector3.Zero, boundingBoxScale);
             ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.White, ballBounce);
+			crosshair = new Crosshair(GraphicsDevice, ball.Position, boundingBoxScale);
 			player1 = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.White, player1Texture);
 			player2 = new Paddle(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.White, player2Texture);
-			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.Green, helperTexture);
+			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z + .1f), helperScale, Color.Green, helperTexture);
 
-            shapes = new Shape[6] { skyBox, boundingBox, ball, player1, player2, hitHelper };			
-
-			// Vertices for creating crosshair lines
-			VertexPositionColor[] crosshairVertices = new VertexPositionColor[4]
-			{
-				new VertexPositionColor(new Vector3(-1, 0, 0), Color.Red),
-				new VertexPositionColor(new Vector3(1, 0, 0), Color.Red),
-
-				new VertexPositionColor(new Vector3(0, -1, 0), Color.Red),
-				new VertexPositionColor(new Vector3(0, 1, 0), Color.Red)
-			};
-
-			crosshairVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColor), crosshairVertices.Length, BufferUsage.WriteOnly);
-			crosshairVertexBuffer.SetData<VertexPositionColor>(crosshairVertices);
-
-			short[] crosshairHIndices = new short[2] { 0, 1 };
-			crosshairHIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), crosshairHIndices.Length, BufferUsage.WriteOnly);
-			crosshairHIndexBuffer.SetData<short>(crosshairHIndices);
-
-			short[] crosshairVIndices = new short[2] { 2, 3 };
-			crosshairVIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), crosshairVIndices.Length, BufferUsage.WriteOnly);
-			crosshairVIndexBuffer.SetData<short>(crosshairVIndices);
+            shapes = new Shape[7] { skyBox, boundingBox, crosshair, ball, player1, player2, hitHelper };			
 		}
 
 		/// <summary>
@@ -168,9 +149,7 @@ namespace Project3
 		/// </summary>
 		protected override void UnloadContent()
 		{
-			crosshairVertexBuffer.Dispose();
-			crosshairHIndexBuffer.Dispose();
-			crosshairVIndexBuffer.Dispose();
+
 		}
 
 		/// <summary>
@@ -249,6 +228,9 @@ namespace Project3
 
                 if (ball.Velocity.Z < 0)
                     updateAI(timePassed);
+
+				// Crosshair follows ball
+				crosshair.Position = ball.Position;
             }
 
             if (keyboard.IsKeyDown(Keys.Enter))
@@ -317,7 +299,7 @@ namespace Project3
 				ball.Position = Vector3.Zero;
 				ball.Velocity = Vector3.UnitZ * ballSpeed;
 
-				hitHelper.Position = new Vector3(0, 0, 20);
+				hitHelper.Position = new Vector3(0, 0, boundingBoxScale.Z + .1f);
 
 				player1.Position = new Vector3(0, 0, player1.Position.Z);
 				player2.Position = new Vector3(0, 0, player2.Position.Z);
@@ -333,7 +315,7 @@ namespace Project3
 			// box instead of the playing field.
 			Vector3 tempPosition = hitHelper.detectCollision(ball.Position, ball.Velocity);
 			Vector3 offset = vectorFromSigns(tempPosition);
-			tempPosition.Z = offset.Z * 20;
+			tempPosition.Z = offset.Z * boundingBoxScale.Z + .1f;
 
 			hitHelper.Position = tempPosition;
 		}
@@ -398,32 +380,6 @@ namespace Project3
 			// Render all game objects
 			foreach (Shape shape in shapes)
 				shape.Draw(cameraPosition, projection);
-
-			// Crosshair lines
-			GraphicsDevice.SetVertexBuffer(crosshairVertexBuffer);
-			boundingBoxEffect.VertexColorEnabled = true;
-
-			// Horizontal
-			boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale) * Matrix.CreateTranslation(new Vector3(0, ball.Position.Y, ball.Position.Z));
-			boundingBoxEffect.View = view;
-			boundingBoxEffect.Projection = projection;
-			GraphicsDevice.Indices = crosshairHIndexBuffer;
-
-			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
-			{
-				pass.Apply();
-				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 1);
-			}
-
-			// Vertical
-			boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale) * Matrix.CreateTranslation(new Vector3(ball.Position.X, 0, ball.Position.Z));
-			GraphicsDevice.Indices = crosshairVIndexBuffer;
-
-			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
-			{
-				pass.Apply();
-				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 1);
-			}
             
             spriteBatch = new SpriteBatch(GraphicsDevice);
             spriteBatch.Begin();
@@ -441,8 +397,6 @@ namespace Project3
             checkWin();
 
             spriteBatch.End();
-
-            
 
             base.Draw(gameTime);
 		}
