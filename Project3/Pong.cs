@@ -68,6 +68,8 @@ namespace Project3
 		Vector3 ballHitHelper;
         Vector3 ballHitHelperDimensions;
 
+		bool fPressed = false;
+
 		public Pong()
 		{
 			graphics = new GraphicsDeviceManager(this);
@@ -274,6 +276,26 @@ namespace Project3
 
 			float milliseconds = gameTime.ElapsedGameTime.Milliseconds;
 
+			// Fullscreen mode
+			if (keyboard.IsKeyDown(Keys.F))
+			{
+				if (fPressed == false)
+					fPressed = true;
+
+				if (!graphics.IsFullScreen)
+				{
+					graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+					graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+				}
+				else
+				{
+					graphics.PreferredBackBufferWidth = windowWidth;
+					graphics.PreferredBackBufferHeight = windowHeight;
+				}
+
+				graphics.ToggleFullScreen();
+			}
+
 			// Camera Y rotation - A and D
 			if (keyboard.IsKeyDown(Keys.A))
 				cameraYaw -= cameraRotateSpeed * milliseconds;
@@ -359,13 +381,16 @@ namespace Project3
 
 				return true;
 			}
-
-			// Else the ball went out of the bounds and should be reset
-			else
+			else // Else the ball went out of the bounds and should be reset
 			{
 				ball.Position = Vector3.Zero;
 				ball.Velocity = Vector3.UnitZ * ballSpeed;
+
 				hitHelper.Position = new Vector3(0, 0, 20);
+
+				player1.Position = new Vector3(0, 0, player1.Position.Z);
+				player2.Position = new Vector3(0, 0, player2.Position.Z);
+
 				return false;
 			}
 		}
