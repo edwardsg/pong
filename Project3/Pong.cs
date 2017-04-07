@@ -45,7 +45,7 @@ namespace Project3
 
 		Ball ball;
 		SkyBox skyBox;
-		Box player1, player2, hitHelper;
+		Paddle player1, player2, hitHelper;
 		Shape[] shapes;
 
         private SoundEffect ballBounce;
@@ -57,20 +57,16 @@ namespace Project3
         float player2Y = 0;
         float player2Z = 0;
 
-        VertexBuffer boxVertexBuffer, boundingBoxVertexBuffer, crosshairVertexBuffer;
-		IndexBuffer boxIndexBuffer, boundingBoxIndexBuffer, crosshairHIndexBuffer, crosshairVIndexBuffer;
+        VertexBuffer boundingBoxVertexBuffer, crosshairVertexBuffer;
+		IndexBuffer boundingBoxIndexBuffer, crosshairHIndexBuffer, crosshairVIndexBuffer;
 
         Effect skyBoxEffect;
-        BasicEffect basicEffect;
         BasicEffect boundingBoxEffect;
         TextureCube skyBoxTexture;
 
         Texture2D player1Texture;
         Texture2D player2Texture;
         Texture2D helperTexture;
-
-		Vector3 ballHitHelper;
-        Vector3 ballHitHelperDimensions;
 
 		bool fPressed = false;
 
@@ -101,29 +97,6 @@ namespace Project3
 			// Set window title
 			Window.Title = "Space Cadet 3D Ping Pong";
 
-			Vector3[] normals = new Vector3[6]
-			{
-				new Vector3(0, 0, -1),  // Front
-                new Vector3(0, 0, 1),   // Back
-                new Vector3(-1, 0, 0),  // Right
-                new Vector3(1, 0, 0),   // Left
-                new Vector3(0, -1, 0),  // Top
-                new Vector3(0, 1, 0)    // Bottom
-            };
-
-			Vector3[] planes = new Vector3[6]
-			{
-				new Vector3(0, 0, 20),  // Front
-                new Vector3(0, 0, -20),   // Back
-                new Vector3(10, 0, 0),  // Right
-                new Vector3(-10, 0, 0),   // Left
-                new Vector3(0, 10, 0),  // Top
-                new Vector3(0, -10, 0)    // Bottom
-            };
-
-            ballHitHelper = new Vector3(-20f, 10f, 0);
-            ballHitHelperDimensions = new Vector3(0.001f, 2, 2);
-
 			base.Initialize();
 		}
 
@@ -148,9 +121,9 @@ namespace Project3
 
             ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.White, ballBounce);
 			skyBox = new SkyBox(GraphicsDevice, Vector3.Zero, 200, skyBoxTexture, skyBoxEffect);
-			player1 = new Box(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.White, player1Texture);
-			player2 = new Box(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.White, player2Texture);
-			hitHelper = new Box(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.White, helperTexture);
+			player1 = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.White, player1Texture);
+			player2 = new Paddle(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.White, player2Texture);
+			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.White, helperTexture);
             
             backgroundSong = Content.Load<Song>("kickshock");
             MediaPlayer.Play(backgroundSong);
@@ -158,55 +131,6 @@ namespace Project3
 
             shapes = new Shape[5] { ball, skyBox, player1, player2, hitHelper };
 
-			// Cube data - four vertices for each face, put into index buffer as 12 triangles
-			VertexPositionNormalTexture[] cubeVertices = new VertexPositionNormalTexture[24]
-			{
-				new VertexPositionNormalTexture(new Vector3(1, 1, 1), Vector3.UnitX, new Vector2(0, 0)),
-				new VertexPositionNormalTexture(new Vector3(1, 1, -1), Vector3.UnitX, new Vector2(1, 0)),
-				new VertexPositionNormalTexture(new Vector3(1, -1, -1), Vector3.UnitX, new Vector2(1, 1)),
-				new VertexPositionNormalTexture(new Vector3(1, -1, 1), Vector3.UnitX, new Vector2(0, 1)),
-
-				new VertexPositionNormalTexture(new Vector3(-1, 1, -1), Vector3.UnitY, new Vector2(0, 0)),
-				new VertexPositionNormalTexture(new Vector3(1, 1, -1), Vector3.UnitY, new Vector2(1, 0)),
-				new VertexPositionNormalTexture(new Vector3(1, 1, 1), Vector3.UnitY, new Vector2(1, 1)),
-				new VertexPositionNormalTexture(new Vector3(-1, 1, 1), Vector3.UnitY, new Vector2(0, 1)),
-
-				new VertexPositionNormalTexture(new Vector3(-1, 1, 1), Vector3.UnitZ, new Vector2(0, 0)),
-				new VertexPositionNormalTexture(new Vector3(1, 1, 1), Vector3.UnitZ, new Vector2(1, 0)),
-				new VertexPositionNormalTexture(new Vector3(1, -1, 1), Vector3.UnitZ, new Vector2(1, 1)),
-				new VertexPositionNormalTexture(new Vector3(-1, -1, 1), Vector3.UnitZ, new Vector2(0, 1)),
-
-				new VertexPositionNormalTexture(new Vector3(-1, 1, -1), -Vector3.UnitX, new Vector2(0, 0)),
-				new VertexPositionNormalTexture(new Vector3(-1, 1, 1), -Vector3.UnitX, new Vector2(1, 0)),
-				new VertexPositionNormalTexture(new Vector3(-1, -1, 1), -Vector3.UnitX, new Vector2(1, 1)),
-				new VertexPositionNormalTexture(new Vector3(-1, -1, -1), -Vector3.UnitX, new Vector2(0, 1)),
-
-				new VertexPositionNormalTexture(new Vector3(-1, -1, 1), -Vector3.UnitY, new Vector2(0, 0)),
-				new VertexPositionNormalTexture(new Vector3(1, -1, 1), -Vector3.UnitY, new Vector2(1, 0)),
-				new VertexPositionNormalTexture(new Vector3(1, -1, -1), -Vector3.UnitY, new Vector2(1, 1)),
-				new VertexPositionNormalTexture(new Vector3(-1, -1, -1), -Vector3.UnitY, new Vector2(0, 1)),
-
-				new VertexPositionNormalTexture(new Vector3(1, 1, -1), -Vector3.UnitZ, new Vector2(0, 0)),
-				new VertexPositionNormalTexture(new Vector3(-1, 1, -1), -Vector3.UnitZ, new Vector2(1, 0)),
-				new VertexPositionNormalTexture(new Vector3(-1, -1, -1), -Vector3.UnitZ, new Vector2(1, 1)),
-				new VertexPositionNormalTexture(new Vector3(1, -1, -1), -Vector3.UnitZ, new Vector2(0, 1))
-			};
-
-			boxVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionNormalTexture), cubeVertices.Length, BufferUsage.WriteOnly);
-			boxVertexBuffer.SetData<VertexPositionNormalTexture>(cubeVertices);
-
-			short[] cubeIndices = new short[36]
-			{
-				0, 1, 3, 2, 3, 1,
-				4, 5, 7, 6, 7, 5,
-				8, 9, 11, 10, 11, 9,
-				12, 13, 15, 14, 15, 13,
-				16, 17, 19, 18, 19, 17,
-				20, 21, 23, 22, 23, 21
-			};
-
-            boxIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), cubeIndices.Length, BufferUsage.WriteOnly);
-            boxIndexBuffer.SetData<short>(cubeIndices);
 
             VertexPosition[] boundingBox = new VertexPosition[8]
             {
@@ -264,8 +188,6 @@ namespace Project3
 		/// </summary>
 		protected override void UnloadContent()
 		{
-			boxVertexBuffer.Dispose();
-            boxIndexBuffer.Dispose();
 			boundingBoxVertexBuffer.Dispose();
 			boundingBoxIndexBuffer.Dispose();
 		}
@@ -480,12 +402,7 @@ namespace Project3
             // Set VertexBuffer and IndexBuffer for SkyBox and Paddles
 
 			foreach (Shape shape in shapes)
-			{
-				GraphicsDevice.SetVertexBuffer(boxVertexBuffer);
-				GraphicsDevice.Indices = boxIndexBuffer;
-
 				shape.Draw(cameraPosition, projection);
-			}
 
 			boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale);
 			boundingBoxEffect.View = view;
