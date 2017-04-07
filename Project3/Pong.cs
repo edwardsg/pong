@@ -487,8 +487,7 @@ namespace Project3
 				shape.Draw(cameraPosition, projection);
 			}
 
-			Matrix boundingBoxWorld = Matrix.CreateScale(boundingBoxScale);
-			boundingBoxEffect.World = boundingBoxWorld;
+			boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale);
 			boundingBoxEffect.View = view;
 			boundingBoxEffect.Projection = projection;
 
@@ -510,6 +509,8 @@ namespace Project3
                 pass.Apply();
 				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
 			}
+
+			boundingBoxEffect.World = Matrix.CreateScale(new Vector3(boundingBoxScale.X - .1f, boundingBoxScale.Y - .1f, boundingBoxScale.Z - .1f));
 
 			GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
 			GraphicsDevice.Indices = boundingBoxIndexBuffer;
