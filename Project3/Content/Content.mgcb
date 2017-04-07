@@ -67,3 +67,33 @@
 /processorParam:Quality=Best
 /build:kickshock.mp3
 
+#begin bloop.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:bloop.wav
+
+#begin moveforward.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:moveforward.mp3
+
+#begin phasers.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:phasers.wav
+
+#begin toiletflushing.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:toiletflushing.wav
+
+#begin womp.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:womp.wav
+
