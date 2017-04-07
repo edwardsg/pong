@@ -127,3 +127,9 @@
 /processorParam:TextureFormat=Compressed
 /build:Arial.spritefont
 
+#begin sendforthehorses.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:sendforthehorses.mp3
+
