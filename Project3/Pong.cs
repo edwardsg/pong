@@ -55,7 +55,8 @@ namespace Project3
         private Song backgroundSong;
         private Song winSong;
         private Song loseSong;
-        private SpriteFont font;
+        private SpriteFont scoreFont;
+        private SpriteFont conditionFont;
         int player1Score = 0;
         int player2Score = 0;
         bool pauseGame = false;
@@ -128,7 +129,8 @@ namespace Project3
             player1Texture = Content.Load<Texture2D>("player1Paddle");
             player2Texture = Content.Load<Texture2D>("player2Paddle");
             helperTexture = Content.Load<Texture2D>("shadow");
-            font = Content.Load<SpriteFont>("Arial");
+            scoreFont = Content.Load<SpriteFont>("Arial16");
+            conditionFont = Content.Load<SpriteFont>("Arial30");
 
             ballBounce = Content.Load<SoundEffect>("blip");
 
@@ -163,29 +165,30 @@ namespace Project3
 
 			if (keyboard.IsKeyDown(Keys.Escape))
 				Exit();
+
+            // Fullscreen mode
+            if (keyboard.IsKeyDown(Keys.F))
+            {
+                if (fPressed == false)
+                    fPressed = true;
+
+                if (!graphics.IsFullScreen)
+                {
+                    graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+                    graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+                }
+                else
+                {
+                    graphics.PreferredBackBufferWidth = windowWidth;
+                    graphics.PreferredBackBufferHeight = windowHeight;
+                }
+
+                graphics.ToggleFullScreen();
+            }
+
             if (!pauseGame)
             {
                 float milliseconds = gameTime.ElapsedGameTime.Milliseconds;
-
-                // Fullscreen mode
-                if (keyboard.IsKeyDown(Keys.F))
-                {
-                    if (fPressed == false)
-                        fPressed = true;
-
-                    if (!graphics.IsFullScreen)
-                    {
-                        graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
-                        graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
-                    }
-                    else
-                    {
-                        graphics.PreferredBackBufferWidth = windowWidth;
-                        graphics.PreferredBackBufferHeight = windowHeight;
-                    }
-
-                    graphics.ToggleFullScreen();
-                }
 
                 // Camera Y rotation - A and D
                 if (keyboard.IsKeyDown(Keys.A))
@@ -381,18 +384,19 @@ namespace Project3
 			foreach (Shape shape in shapes)
 				shape.Draw(cameraPosition, projection);
             
+            // Draw the scores for the human and computer players
             spriteBatch = new SpriteBatch(GraphicsDevice);
             spriteBatch.Begin();
             var score = new StringBuilder();
             
             score.Append("Human Score: ");
             score.Append(player1Score).AppendLine();
-            spriteBatch.DrawString(font, score.ToString(), new Vector2(16, 16), Color.White);
+            spriteBatch.DrawString(scoreFont, score.ToString(), new Vector2(16, 16), Color.White);
 
             score.Clear();
             score.Append("Computer Score: ");
             score.Append(player2Score).AppendLine();
-            spriteBatch.DrawString(font, score.ToString(), new Vector2(500, 16), Color.White);
+            spriteBatch.DrawString(scoreFont, score.ToString(), new Vector2(GraphicsDevice.Viewport.Width - scoreFont.MeasureString(score).X - 16, 16), Color.White);
 
             checkWin();
 
@@ -405,7 +409,8 @@ namespace Project3
         {
             if (player1Score > 2)
             {
-                spriteBatch.DrawString(font, "You Win!", new Vector2(300, 300), Color.White);
+                string win = "You Win!";
+                spriteBatch.DrawString(conditionFont, win, new Vector2((GraphicsDevice.Viewport.Width / 2) - scoreFont.MeasureString(win).X, (GraphicsDevice.Viewport.Height / 2) - scoreFont.MeasureString(win).Y), Color.White);
                 if (!pauseGame)
                 {
                     MediaPlayer.Stop();
@@ -413,9 +418,11 @@ namespace Project3
                 }
                 pauseGame = true;
             }
+
             if (player2Score > 2)
             {
-                spriteBatch.DrawString(font, "You Lose!", new Vector2(300, 300), Color.White);
+                string lose = "You Lose!";
+                spriteBatch.DrawString(conditionFont, lose, new Vector2((GraphicsDevice.Viewport.Width / 2) - scoreFont.MeasureString(lose).X, (GraphicsDevice.Viewport.Height / 2) - scoreFont.MeasureString(lose).Y), Color.White);
                 if (!pauseGame)
                 {
                     MediaPlayer.Stop();
