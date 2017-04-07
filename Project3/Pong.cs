@@ -334,8 +334,6 @@ namespace Project3
 		// Made to check if the ball hits a wall so that we can implement some sort of color
 		private void checkBallBounds()
         {
-			// I don't think I'm doing the offset right. This is to have the hitHelper be on the bounding
-			// box instead of the playing field.
 			Vector3 tempPosition = hitHelper.detectCollision(ball.Position, ball.Velocity);
 			Vector3 offset = vectorFromSigns(tempPosition);
 			tempPosition.Z = offset.Z * boundingBoxScale.Z + .1f;
@@ -358,6 +356,7 @@ namespace Project3
 			return offset;
 		}
 
+        // Used to update position of AI
 		private void updateAI(float timePassed)
 		{
 			// Based on hitHelper position
