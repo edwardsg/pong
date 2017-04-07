@@ -1,12 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Primitives;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Remoting.Contexts;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Project3
 {
@@ -23,6 +16,7 @@ namespace Project3
 			GraphicsDevice = device;
 			Scale = Vector3.One;
 			Position = position;
+			Effect = new BasicEffect(GraphicsDevice);
         }
 
 		public Shape(GraphicsDevice device, Vector3 position, Vector3 scale) : this(device, position)

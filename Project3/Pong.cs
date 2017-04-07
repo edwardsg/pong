@@ -23,7 +23,7 @@ namespace Project3
 		// Game constants
 		private const float ballSpeed = 20;
 		private const float humanSpeed = 10;
-		private const float aiSpeed = 9;
+		private const float aiSpeed = 5;
 
 		private Vector3 boundingBoxScale = new Vector3(10, 10, 20);
 		private Vector3 paddleScale = new Vector3(1, 1, .2f);
@@ -44,25 +44,26 @@ namespace Project3
 		public const float nearPlane = .01f;
 		public const float farPlane = 500;
 
-		Ball ball;
-		SkyBox skyBox;
-		Paddle player1, player2, hitHelper;
-		Shape[] shapes;
+		private SkyBox skyBox;
+		private BoundingBox boundingBox;
+		private Ball ball;
+		private Paddle player1, player2, hitHelper;
+		private Shape[] shapes;
 
         private SoundEffect ballBounce;
         private Song backgroundSong;
-        private Song winSong;
-        private SoundEffect loseSong;
         private SpriteFont font;
-
-        bool pauseGame = false;
-
-        // Player scores
         int player1Score = 0;
         int player2Score = 0;
 
-        VertexBuffer boundingBoxVertexBuffer, crosshairVertexBuffer;
-		IndexBuffer boundingBoxIndexBuffer, crosshairHIndexBuffer, crosshairVIndexBuffer;
+        // Player position changes
+        float player1Y = 0;
+        float player1X = 0;
+        float player2Y = 0;
+        float player2Z = 0;
+
+        VertexBuffer crosshairVertexBuffer;
+		IndexBuffer crosshairHIndexBuffer, crosshairVIndexBuffer;
 
         Effect skyBoxEffect;
         BasicEffect boundingBoxEffect;
@@ -113,6 +114,12 @@ namespace Project3
 			// Create a new SpriteBatch, which can be used to draw textures.
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 			
+			// BGM
+            backgroundSong = Content.Load<Song>("kickshock");
+            MediaPlayer.Play(backgroundSong);
+            MediaPlayer.IsRepeating = true;
+
+			// Create game objects
             skyBoxEffect = Content.Load<Effect>("skybox");
             skyBoxTexture = Content.Load<TextureCube>("Islands");
             boundingBoxEffect = new BasicEffect(GraphicsDevice);
@@ -124,50 +131,16 @@ namespace Project3
 
             ballBounce = Content.Load<SoundEffect>("blip");
 
-            ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.White, ballBounce);
 			skyBox = new SkyBox(GraphicsDevice, Vector3.Zero, 200, skyBoxTexture, skyBoxEffect);
+			boundingBox = new BoundingBox(GraphicsDevice, Vector3.Zero, boundingBoxScale);
+            ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.White, ballBounce);
 			player1 = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.White, player1Texture);
 			player2 = new Paddle(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.White, player2Texture);
 			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.White, helperTexture);
-            
-            backgroundSong = Content.Load<Song>("kickshock");
-            winSong = Content.Load<Song>("moveforward");
-            loseSong = Content.Load<SoundEffect>("toiletflushing");
-            MediaPlayer.Play(backgroundSong);
-            MediaPlayer.IsRepeating = true;
 
-            shapes = new Shape[5] { ball, skyBox, player1, player2, hitHelper };
+            shapes = new Shape[6] { skyBox, boundingBox, ball, player1, player2, hitHelper };			
 
-
-            VertexPosition[] boundingBox = new VertexPosition[8]
-            {
-                new VertexPosition(new Vector3(-1, -1, 1)),
-                new VertexPosition(new Vector3(-1, 1, 1)),
-                new VertexPosition(new Vector3(1, 1, 1)),
-                new VertexPosition(new Vector3(1, -1, 1)),
-
-                new VertexPosition(new Vector3(1, -1, -1)),
-                new VertexPosition(new Vector3(-1, -1, -1)),
-                new VertexPosition(new Vector3(-1, 1, -1)),
-                new VertexPosition(new Vector3(1, 1, -1)),
-            };
-
-            boundingBoxVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPosition), boundingBox.Length, BufferUsage.WriteOnly);
-            boundingBoxVertexBuffer.SetData<VertexPosition>(boundingBox);
-
-            short[] boundingBoxIndices = new short[48]
-            {
-                0, 1, 1, 2, 2, 3, 3, 0,
-                3, 4, 4, 7, 7, 2, 2, 3,
-                4, 5, 5, 6, 6, 7, 7, 4,
-                5, 0, 0, 1, 1, 6, 6, 5,
-                1, 2, 2, 7, 7, 6, 6, 1,
-                0, 3, 3, 4, 4, 5, 5, 0
-            };
-
-            boundingBoxIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), boundingBoxIndices.Length, BufferUsage.WriteOnly);
-            boundingBoxIndexBuffer.SetData<short>(boundingBoxIndices);
-
+			// Vertices for creating crosshair lines
 			VertexPositionColor[] crosshairVertices = new VertexPositionColor[4]
 			{
 				new VertexPositionColor(new Vector3(-1, 0, 0), Color.Red),
@@ -180,11 +153,11 @@ namespace Project3
 			crosshairVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColor), crosshairVertices.Length, BufferUsage.WriteOnly);
 			crosshairVertexBuffer.SetData<VertexPositionColor>(crosshairVertices);
 
-			short[] crosshairHIndices = new short[2] { 1, 2 };
+			short[] crosshairHIndices = new short[2] { 0, 1 };
 			crosshairHIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), crosshairHIndices.Length, BufferUsage.WriteOnly);
 			crosshairHIndexBuffer.SetData<short>(crosshairHIndices);
 
-			short[] crosshairVIndices = new short[2] { 0, 1 };
+			short[] crosshairVIndices = new short[2] { 2, 3 };
 			crosshairVIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), crosshairVIndices.Length, BufferUsage.WriteOnly);
 			crosshairVIndexBuffer.SetData<short>(crosshairVIndices);
 		}
@@ -195,8 +168,7 @@ namespace Project3
 		/// </summary>
 		protected override void UnloadContent()
 		{
-			boundingBoxVertexBuffer.Dispose();
-			boundingBoxIndexBuffer.Dispose();
+
 		}
 
 		/// <summary>
@@ -208,111 +180,89 @@ namespace Project3
 		{
 			KeyboardState keyboard = Keyboard.GetState();
 
-            if (!pauseGame)
-            {
-                if (keyboard.IsKeyDown(Keys.Escape))
-                    Exit();
+			if (keyboard.IsKeyDown(Keys.Escape))
+				Exit();
 
-                float milliseconds = gameTime.ElapsedGameTime.Milliseconds;
+			float milliseconds = gameTime.ElapsedGameTime.Milliseconds;
 
-                // Fullscreen mode
-                if (keyboard.IsKeyDown(Keys.F))
-                {
-                    if (fPressed == false)
-                        fPressed = true;
+			// Fullscreen mode
+			if (keyboard.IsKeyDown(Keys.F))
+			{
+				if (fPressed == false)
+					fPressed = true;
 
-                    if (!graphics.IsFullScreen)
-                    {
-                        graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
-                        graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
-                    }
-                    else
-                    {
-                        graphics.PreferredBackBufferWidth = windowWidth;
-                        graphics.PreferredBackBufferHeight = windowHeight;
-                    }
+				if (!graphics.IsFullScreen)
+				{
+					graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+					graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+				}
+				else
+				{
+					graphics.PreferredBackBufferWidth = windowWidth;
+					graphics.PreferredBackBufferHeight = windowHeight;
+				}
 
-                    graphics.ToggleFullScreen();
-                }
+				graphics.ToggleFullScreen();
+			}
 
-                // Camera Y rotation - A and D
-                if (keyboard.IsKeyDown(Keys.A))
-                    cameraYaw -= cameraRotateSpeed * milliseconds;
-                else if (keyboard.IsKeyDown(Keys.D))
-                    cameraYaw += cameraRotateSpeed * milliseconds;
+			// Camera Y rotation - A and D
+			if (keyboard.IsKeyDown(Keys.A))
+				cameraYaw -= cameraRotateSpeed * milliseconds;
+			else if (keyboard.IsKeyDown(Keys.D))
+				cameraYaw += cameraRotateSpeed * milliseconds;
 
-                // Camera X rotation - W and S
-                if (keyboard.IsKeyDown(Keys.W) && cameraPitch > minPitch)
-                    cameraPitch -= cameraRotateSpeed * milliseconds;
-                else if (keyboard.IsKeyDown(Keys.S) && cameraPitch < maxPitch)
-                    cameraPitch += cameraRotateSpeed * milliseconds;
+			// Camera X rotation - W and S
+			if (keyboard.IsKeyDown(Keys.W) && cameraPitch > minPitch)
+				cameraPitch -= cameraRotateSpeed * milliseconds;
+			else if (keyboard.IsKeyDown(Keys.S) && cameraPitch < maxPitch)
+				cameraPitch += cameraRotateSpeed * milliseconds;
 
-                Vector3 player1Velocity = Vector3.Zero;
+			Vector3 player1Velocity = Vector3.Zero;
 
-                // Player 1 X movement - Right and Left arrow keys
-                if (keyboard.IsKeyDown(Keys.Right) && player1.Position.X < boundingBoxScale.X - player1.Scale.X)
-                    player1Velocity.X = 1;
-                else if (keyboard.IsKeyDown(Keys.Left) && player1.Position.X > -boundingBoxScale.X + player1.Scale.X)
-                    player1Velocity.X = -1;
+			// Player 1 X movement - Right and Left arrow keys
+			if (keyboard.IsKeyDown(Keys.Right) && player1.Position.X < boundingBoxScale.X - player1.Scale.X)
+				player1Velocity.X = 1;
+			else if (keyboard.IsKeyDown(Keys.Left) && player1.Position.X > -boundingBoxScale.X + player1.Scale.X)
+				player1Velocity.X = -1;
 
-                // Player 1 Y movement - Up and Down arrow keys
-                if (keyboard.IsKeyDown(Keys.Up) && player1.Position.Y < boundingBoxScale.Y - player1.Scale.Y)
-                    player1Velocity.Y = 1;
-                else if (keyboard.IsKeyDown(Keys.Down) && player1.Position.Y > -boundingBoxScale.Y + player1.Scale.Y)
-                    player1Velocity.Y = -1;
+			// Player 1 Y movement - Up and Down arrow keys
+			if (keyboard.IsKeyDown(Keys.Up) && player1.Position.Y < boundingBoxScale.Y - player1.Scale.Y)
+				player1Velocity.Y = 1;
+			else if (keyboard.IsKeyDown(Keys.Down) && player1.Position.Y > -boundingBoxScale.Y + player1.Scale.Y)
+				player1Velocity.Y = -1;
+			
+			float timePassed = milliseconds / 1000;
 
-                float timePassed = milliseconds / 1000;
+			if (player1Velocity != Vector3.Zero)
+				player1Velocity = Vector3.Normalize(player1Velocity);
 
-                if (player1Velocity != Vector3.Zero)
-                    player1Velocity = Vector3.Normalize(player1Velocity);
+			player1.Velocity = player1Velocity * humanSpeed;
+			player1.Update(timePassed);
 
-                player1.Velocity = player1Velocity * humanSpeed;
-                player1.Update(timePassed);
+			bool hitPaddle = UpdateBall(timePassed);
 
-                bool hitPaddle = UpdateBall(timePassed);
+			if (hitPaddle)
+				checkBallBounds();
 
-                if (hitPaddle)
-                    checkBallBounds();
+			if (ball.Velocity.Z < 0)
+				updateAI(timePassed);
 
-                if (ball.Velocity.Z < 0)
-                    updateAI(timePassed);
-            }
-
-            else if (keyboard.IsKeyDown(Keys.Enter))
-            {
-                pauseGame = false;
-                player1Score = player2Score = 0;
-            }
-
-            if (keyboard.IsKeyDown(Keys.Escape))
-                Exit();
-
-            base.Update(gameTime);
+			base.Update(gameTime);
 		}
 
 		private bool UpdateBall(float timePassed)
 		{
 			ball.Update(timePassed);
 
-            // If ball is at the Z bounds of the box at the side with player 1
-            if (ball.Position.Z > boundingBoxScale.Z - Ball.radius)
-            {
-                bool hit = checkPlayer(player1);
-                if (!hit)
-                    player2Score += 1;
-                return hit;
-            }
+			// If ball is at the Z bounds of the box at the side with player 1
+			if (ball.Position.Z > boundingBoxScale.Z - Ball.radius)
+				return checkPlayer(player1);
 
 			// If ball is at the Z bounds of the box at the side with player 2
 			if (ball.Position.Z < -boundingBoxScale.Z + Ball.radius)
-            {
-                bool hit = checkPlayer(player2);
-                if (!hit)
-                    player1Score += 1;
-                return hit;
-            }
+				return checkPlayer(player2);
 
-            if (ball.Position.X > boundingBoxScale.X - Ball.radius || ball.Position.X < -boundingBoxScale.X + Ball.radius)
+			if (ball.Position.X > boundingBoxScale.X - Ball.radius || ball.Position.X < -boundingBoxScale.X + Ball.radius)
 				ball.BounceX();
 
 			if (ball.Position.Y > boundingBoxScale.Y - Ball.radius || ball.Position.Y < -boundingBoxScale.Y + Ball.radius)
@@ -371,6 +321,16 @@ namespace Project3
 		{
 			Vector3 offset = Vector3.Zero;
 
+			if (tempPosition.X > 0)
+				offset.X = 1;
+			else if (tempPosition.X < 0)
+				offset.X = -1;
+
+			if (tempPosition.Y > 0)
+				offset.Y = 1;
+			else if (tempPosition.Y < 0)
+				offset.Y = -1;
+
 			if (tempPosition.Z > 0)
 				offset.Z = 1;
 			else if (tempPosition.Z < 0)
@@ -414,57 +374,24 @@ namespace Project3
 			cameraPosition = Vector3.Transform(Vector3.Backward * 1f, rotation); //was 1.5f, but I changed it for debugging purposes
 			cameraPosition *= cameraDistance;
 
-			// Set up scale, camera direction, and perspective projection
+			// Set up camera direction, and perspective projection
 			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
 			Matrix projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
-            GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
-            // Set VertexBuffer and IndexBuffer for SkyBox and Paddles
-
+			// Render all game objects
 			foreach (Shape shape in shapes)
 				shape.Draw(cameraPosition, projection);
 
-            GraphicsDevice.BlendState = BlendState.Opaque;
+			// Crosshair lines
+			GraphicsDevice.SetVertexBuffer(crosshairVertexBuffer);
+			boundingBoxEffect.VertexColorEnabled = true;
 
-            boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale);
+			// Horizontal
+			boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale) * Matrix.CreateTranslation(new Vector3(0, ball.Position.Y, ball.Position.Z));
 			boundingBoxEffect.View = view;
 			boundingBoxEffect.Projection = projection;
-
-			//boundingBoxEffect.DiffuseColor = Color.Aquamarine.ToVector3();
-			boundingBoxEffect.LightingEnabled = true;
-			boundingBoxEffect.DirectionalLight0.Enabled = true;
-			boundingBoxEffect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(1, 1, 1));
-			boundingBoxEffect.DirectionalLight0.DiffuseColor = Color.MediumVioletRed.ToVector3();
-			boundingBoxEffect.DirectionalLight0.SpecularColor = Color.White.ToVector3();
-			boundingBoxEffect.DirectionalLight1.Enabled = true;
-			boundingBoxEffect.DirectionalLight1.Direction = Vector3.Normalize(new Vector3(-1, -1, -1));
-			boundingBoxEffect.DirectionalLight1.DiffuseColor = Color.MediumVioletRed.ToVector3();
-			boundingBoxEffect.DirectionalLight1.SpecularColor = Color.White.ToVector3();
-
-			GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
-
-			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
-			}
-
-			boundingBoxEffect.World = Matrix.CreateScale(new Vector3(boundingBoxScale.X - .1f, boundingBoxScale.Y - .1f, boundingBoxScale.Z - .1f));
-
-			GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
-			GraphicsDevice.Indices = boundingBoxIndexBuffer;
-
-			boundingBoxEffect.LightingEnabled = false;
-
-			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
-			{
-				pass.Apply();
-				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 24);
-			}
-
-			boundingBoxEffect.World = Matrix.CreateScale(new Vector3(boundingBoxScale.X, 1, 1)) * Matrix.CreateTranslation(new Vector3(0, ball.Position.Y - Ball.radius, ball.Position.Z - Ball.radius));
 			GraphicsDevice.Indices = crosshairHIndexBuffer;
 
 			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
@@ -473,7 +400,8 @@ namespace Project3
 				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 1);
 			}
 
-			boundingBoxEffect.World = Matrix.CreateScale(new Vector3(1, boundingBoxScale.Y, 1)) * Matrix.CreateTranslation(new Vector3(ball.Position.X + Ball.radius, 0, ball.Position.Z - Ball.radius));
+			// Vertical
+			boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale) * Matrix.CreateTranslation(new Vector3(ball.Position.X, 0, ball.Position.Z));
 			GraphicsDevice.Indices = crosshairVIndexBuffer;
 
 			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
@@ -493,31 +421,11 @@ namespace Project3
             score.Clear();
             score.Append("Computer Score: ");
             score.Append(player2Score).AppendLine();
-            spriteBatch.DrawString(font, score.ToString(), new Vector2(600, 16), Color.White);
-
-            // do win-lose conditions
-            checkWin();
+            spriteBatch.DrawString(font, score.ToString(), new Vector2(16, 16), Color.White);
 
             spriteBatch.End();
 
             base.Draw(gameTime);
 		}
-
-        public void checkWin()
-        {
-            if (player1Score > 2 && !pauseGame)
-            {
-                spriteBatch.DrawString(font, "You Win!", new Vector2(300, 300), Color.White);
-                MediaPlayer.Play(winSong);
-                pauseGame = true;
-            }
-            if (player2Score > 2 && !pauseGame)
-            {
-                spriteBatch.DrawString(font, "You Lose!", new Vector2(300, 300), Color.White);
-                MediaPlayer.Stop();
-                loseSong.Play();
-                pauseGame = true;
-            }
-        }
     }
 }
