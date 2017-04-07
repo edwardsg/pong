@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Audio;
 
 namespace Project3
 {
+	// A sphere with velocity and color - also plays sound
     class Ball : Shape
     {
 		private Vector3 velocity;
@@ -30,16 +31,13 @@ namespace Project3
 			Effect = new BasicEffect(GraphicsDevice);
         }
 
+		// Move ball along its velocity vector
 		public override void Update(float timePassed)
 		{
 			Position += velocity * timePassed;
 		}
 
-        public void setVelocity(Vector3 update)
-        {
-            velocity += update;
-        }
-
+		// Bounce ball by reversing vectors in appropriate direction
 		public void BounceX()
 		{
 			velocity.X *= -1;
@@ -54,6 +52,7 @@ namespace Project3
 
 		public override void Draw(Vector3 cameraPosition, Matrix projection)
 		{
+			// Draw sphere primitive using BasicEFfect
 			Effect.World = Matrix.CreateTranslation(Position);
 			Effect.View = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
 			Effect.Projection = projection;

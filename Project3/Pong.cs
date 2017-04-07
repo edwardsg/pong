@@ -1,4 +1,10 @@
-﻿using Microsoft.Xna.Framework;
+﻿/* CS361 Computer Graphics, Project 3: 3D Pong
+ * Shaelyn Divins and Gabriel Edwards
+ * Dr. Barry Wittman
+ * 2017-04-07
+ */
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
