@@ -22,7 +22,7 @@ namespace Project3
 		// Game constants
 		private const float ballSpeed = 20;
 		private const float humanSpeed = 10;
-		private const float aiSpeed = 9;
+		private const float aiSpeed = 5;
 
 		private Vector3 boundingBoxScale = new Vector3(10, 10, 20);
 		private Vector3 paddleScale = new Vector3(1, 1, .2f);
@@ -43,10 +43,11 @@ namespace Project3
 		public const float nearPlane = .01f;
 		public const float farPlane = 500;
 
-		Ball ball;
-		SkyBox skyBox;
-		Paddle player1, player2, hitHelper;
-		Shape[] shapes;
+		private SkyBox skyBox;
+		private BoundingBox boundingBox;
+		private Ball ball;
+		private Paddle player1, player2, hitHelper;
+		private Shape[] shapes;
 
         private SoundEffect ballBounce;
         private Song backgroundSong;
@@ -57,8 +58,8 @@ namespace Project3
         float player2Y = 0;
         float player2Z = 0;
 
-        VertexBuffer boundingBoxVertexBuffer, crosshairVertexBuffer;
-		IndexBuffer boundingBoxIndexBuffer, crosshairHIndexBuffer, crosshairVIndexBuffer;
+        VertexBuffer crosshairVertexBuffer;
+		IndexBuffer crosshairHIndexBuffer, crosshairVIndexBuffer;
 
         Effect skyBoxEffect;
         BasicEffect boundingBoxEffect;
@@ -109,6 +110,12 @@ namespace Project3
 			// Create a new SpriteBatch, which can be used to draw textures.
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 			
+			// BGM
+            backgroundSong = Content.Load<Song>("kickshock");
+            MediaPlayer.Play(backgroundSong);
+            MediaPlayer.IsRepeating = true;
+
+			// Create game objects
             skyBoxEffect = Content.Load<Effect>("skybox");
             skyBoxTexture = Content.Load<TextureCube>("Islands");
             boundingBoxEffect = new BasicEffect(GraphicsDevice);
@@ -119,48 +126,16 @@ namespace Project3
 
             ballBounce = Content.Load<SoundEffect>("blip");
 
-            ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.White, ballBounce);
 			skyBox = new SkyBox(GraphicsDevice, Vector3.Zero, 200, skyBoxTexture, skyBoxEffect);
+			boundingBox = new BoundingBox(GraphicsDevice, Vector3.Zero, boundingBoxScale);
+            ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.White, ballBounce);
 			player1 = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.White, player1Texture);
 			player2 = new Paddle(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.White, player2Texture);
 			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.White, helperTexture);
-            
-            backgroundSong = Content.Load<Song>("kickshock");
-            MediaPlayer.Play(backgroundSong);
-            MediaPlayer.IsRepeating = true;
 
-            shapes = new Shape[5] { ball, skyBox, player1, player2, hitHelper };
+            shapes = new Shape[6] { skyBox, boundingBox, ball, player1, player2, hitHelper };			
 
-
-            VertexPosition[] boundingBox = new VertexPosition[8]
-            {
-                new VertexPosition(new Vector3(-1, -1, 1)),
-                new VertexPosition(new Vector3(-1, 1, 1)),
-                new VertexPosition(new Vector3(1, 1, 1)),
-                new VertexPosition(new Vector3(1, -1, 1)),
-
-                new VertexPosition(new Vector3(1, -1, -1)),
-                new VertexPosition(new Vector3(-1, -1, -1)),
-                new VertexPosition(new Vector3(-1, 1, -1)),
-                new VertexPosition(new Vector3(1, 1, -1)),
-            };
-
-            boundingBoxVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPosition), boundingBox.Length, BufferUsage.WriteOnly);
-            boundingBoxVertexBuffer.SetData<VertexPosition>(boundingBox);
-
-            short[] boundingBoxIndices = new short[48]
-            {
-                0, 1, 1, 2, 2, 3, 3, 0,
-                3, 4, 4, 7, 7, 2, 2, 3,
-                4, 5, 5, 6, 6, 7, 7, 4,
-                5, 0, 0, 1, 1, 6, 6, 5,
-                1, 2, 2, 7, 7, 6, 6, 1,
-                0, 3, 3, 4, 4, 5, 5, 0
-            };
-
-            boundingBoxIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), boundingBoxIndices.Length, BufferUsage.WriteOnly);
-            boundingBoxIndexBuffer.SetData<short>(boundingBoxIndices);
-
+			// Vertices for creating crosshair lines
 			VertexPositionColor[] crosshairVertices = new VertexPositionColor[4]
 			{
 				new VertexPositionColor(new Vector3(-1, 0, 0), Color.Red),
@@ -173,11 +148,11 @@ namespace Project3
 			crosshairVertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColor), crosshairVertices.Length, BufferUsage.WriteOnly);
 			crosshairVertexBuffer.SetData<VertexPositionColor>(crosshairVertices);
 
-			short[] crosshairHIndices = new short[2] { 1, 2 };
+			short[] crosshairHIndices = new short[2] { 0, 1 };
 			crosshairHIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), crosshairHIndices.Length, BufferUsage.WriteOnly);
 			crosshairHIndexBuffer.SetData<short>(crosshairHIndices);
 
-			short[] crosshairVIndices = new short[2] { 0, 1 };
+			short[] crosshairVIndices = new short[2] { 2, 3 };
 			crosshairVIndexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), crosshairVIndices.Length, BufferUsage.WriteOnly);
 			crosshairVIndexBuffer.SetData<short>(crosshairVIndices);
 		}
@@ -188,8 +163,7 @@ namespace Project3
 		/// </summary>
 		protected override void UnloadContent()
 		{
-			boundingBoxVertexBuffer.Dispose();
-			boundingBoxIndexBuffer.Dispose();
+
 		}
 
 		/// <summary>
@@ -393,54 +367,24 @@ namespace Project3
 			cameraPosition = Vector3.Transform(Vector3.Backward * 1f, rotation); //was 1.5f, but I changed it for debugging purposes
 			cameraPosition *= cameraDistance;
 
-			// Set up scale, camera direction, and perspective projection
+			// Set up camera direction, and perspective projection
 			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
 			Matrix projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // Set VertexBuffer and IndexBuffer for SkyBox and Paddles
-
+			// Render all game objects
 			foreach (Shape shape in shapes)
 				shape.Draw(cameraPosition, projection);
 
-			boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale);
+			// Crosshair lines
+			GraphicsDevice.SetVertexBuffer(crosshairVertexBuffer);
+			boundingBoxEffect.VertexColorEnabled = true;
+
+			// Horizontal
+			boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale) * Matrix.CreateTranslation(new Vector3(0, ball.Position.Y, ball.Position.Z));
 			boundingBoxEffect.View = view;
 			boundingBoxEffect.Projection = projection;
-
-			//boundingBoxEffect.DiffuseColor = Color.Aquamarine.ToVector3();
-			boundingBoxEffect.LightingEnabled = true;
-			boundingBoxEffect.DirectionalLight0.Enabled = true;
-			boundingBoxEffect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(1, 1, 1));
-			boundingBoxEffect.DirectionalLight0.DiffuseColor = Color.MediumVioletRed.ToVector3();
-			boundingBoxEffect.DirectionalLight0.SpecularColor = Color.White.ToVector3();
-			boundingBoxEffect.DirectionalLight1.Enabled = true;
-			boundingBoxEffect.DirectionalLight1.Direction = Vector3.Normalize(new Vector3(-1, -1, -1));
-			boundingBoxEffect.DirectionalLight1.DiffuseColor = Color.MediumVioletRed.ToVector3();
-			boundingBoxEffect.DirectionalLight1.SpecularColor = Color.White.ToVector3();
-
-			GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
-
-			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
-			}
-
-			boundingBoxEffect.World = Matrix.CreateScale(new Vector3(boundingBoxScale.X - .1f, boundingBoxScale.Y - .1f, boundingBoxScale.Z - .1f));
-
-			GraphicsDevice.SetVertexBuffer(boundingBoxVertexBuffer);
-			GraphicsDevice.Indices = boundingBoxIndexBuffer;
-
-			boundingBoxEffect.LightingEnabled = false;
-
-			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
-			{
-				pass.Apply();
-				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 24);
-			}
-
-			boundingBoxEffect.World = Matrix.CreateScale(new Vector3(boundingBoxScale.X, 1, 1)) * Matrix.CreateTranslation(new Vector3(0, ball.Position.Y - Ball.radius, ball.Position.Z - Ball.radius));
 			GraphicsDevice.Indices = crosshairHIndexBuffer;
 
 			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
@@ -449,7 +393,8 @@ namespace Project3
 				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 1);
 			}
 
-			boundingBoxEffect.World = Matrix.CreateScale(new Vector3(1, boundingBoxScale.Y, 1)) * Matrix.CreateTranslation(new Vector3(ball.Position.X + Ball.radius, 0, ball.Position.Z - Ball.radius));
+			// Vertical
+			boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale) * Matrix.CreateTranslation(new Vector3(ball.Position.X, 0, ball.Position.Z));
 			GraphicsDevice.Indices = crosshairVIndexBuffer;
 
 			foreach (EffectPass pass in boundingBoxEffect.CurrentTechnique.Passes)
