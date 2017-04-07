@@ -8,13 +8,13 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Project3
 {
-    class SkyBox : Shape
+    class SkyBox : Box
     {
 		public new Effect Effect { get; private set; }
 
 		private TextureCube texture;
 
-		public SkyBox(GraphicsDevice device, Vector3 position, int scale, TextureCube texture, Effect effect) : base(device, position, scale)
+		public SkyBox(GraphicsDevice device, Vector3 position, int scale, TextureCube texture, Effect effect) : base(device, position, new Vector3(scale, scale, scale))
 		{
 			this.texture = texture;
 			Effect = effect;
@@ -22,6 +22,9 @@ namespace Project3
 
 		public override void Draw(Vector3 cameraPosition, Matrix projection)
 		{
+			GraphicsDevice.SetVertexBuffer(VertexBuffer);
+			GraphicsDevice.Indices = IndexBuffer;
+
 			Matrix world = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Position);
 			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
 

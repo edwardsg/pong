@@ -25,23 +25,12 @@ namespace Project3
 			Position = position;
         }
 
-		public Shape(GraphicsDevice device, Vector3 position, float scale) : this(device, position)
-		{
-			Scale = new Vector3(scale, scale, scale);
-		}
-
 		public Shape(GraphicsDevice device, Vector3 position, Vector3 scale) : this(device, position)
 		{
 			Scale = scale;
 		}
 
-		public virtual void Draw(Vector3 cameraPosition, Matrix projection)
-		{
-			
-		}
-
-		public virtual void Update(float timePassed)
-		{
-		}
+		public virtual void Draw(Vector3 cameraPosition, Matrix projection) {}
+		public virtual void Update(float timePassed) {}
     }
 }

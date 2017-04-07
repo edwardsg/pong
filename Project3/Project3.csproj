@@ -41,6 +41,7 @@
     <Compile Include="Ball.cs" />
     <Compile Include="Box.cs" />
     <Compile Include="GeometricPrimitive.cs" />
+    <Compile Include="Paddle.cs" />
     <Compile Include="Pong.cs" />
     <Compile Include="Project3.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
