@@ -51,15 +51,15 @@ namespace Project3
 
         private SoundEffect ballBounce;
         private Song backgroundSong;
+        private Song winSong;
+        private SoundEffect loseSong;
         private SpriteFont font;
+
+        bool pauseGame = false;
+
+        // Player scores
         int player1Score = 0;
         int player2Score = 0;
-
-        // Player position changes
-        float player1Y = 0;
-        float player1X = 0;
-        float player2Y = 0;
-        float player2Z = 0;
 
         VertexBuffer boundingBoxVertexBuffer, crosshairVertexBuffer;
 		IndexBuffer boundingBoxIndexBuffer, crosshairHIndexBuffer, crosshairVIndexBuffer;
@@ -131,6 +131,8 @@ namespace Project3
 			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.White, helperTexture);
             
             backgroundSong = Content.Load<Song>("kickshock");
+            winSong = Content.Load<Song>("moveforward");
+            loseSong = Content.Load<SoundEffect>("toiletflushing");
             MediaPlayer.Play(backgroundSong);
             MediaPlayer.IsRepeating = true;
 
@@ -206,89 +208,111 @@ namespace Project3
 		{
 			KeyboardState keyboard = Keyboard.GetState();
 
-			if (keyboard.IsKeyDown(Keys.Escape))
-				Exit();
+            if (!pauseGame)
+            {
+                if (keyboard.IsKeyDown(Keys.Escape))
+                    Exit();
 
-			float milliseconds = gameTime.ElapsedGameTime.Milliseconds;
+                float milliseconds = gameTime.ElapsedGameTime.Milliseconds;
 
-			// Fullscreen mode
-			if (keyboard.IsKeyDown(Keys.F))
-			{
-				if (fPressed == false)
-					fPressed = true;
+                // Fullscreen mode
+                if (keyboard.IsKeyDown(Keys.F))
+                {
+                    if (fPressed == false)
+                        fPressed = true;
 
-				if (!graphics.IsFullScreen)
-				{
-					graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
-					graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
-				}
-				else
-				{
-					graphics.PreferredBackBufferWidth = windowWidth;
-					graphics.PreferredBackBufferHeight = windowHeight;
-				}
+                    if (!graphics.IsFullScreen)
+                    {
+                        graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+                        graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+                    }
+                    else
+                    {
+                        graphics.PreferredBackBufferWidth = windowWidth;
+                        graphics.PreferredBackBufferHeight = windowHeight;
+                    }
 
-				graphics.ToggleFullScreen();
-			}
+                    graphics.ToggleFullScreen();
+                }
 
-			// Camera Y rotation - A and D
-			if (keyboard.IsKeyDown(Keys.A))
-				cameraYaw -= cameraRotateSpeed * milliseconds;
-			else if (keyboard.IsKeyDown(Keys.D))
-				cameraYaw += cameraRotateSpeed * milliseconds;
+                // Camera Y rotation - A and D
+                if (keyboard.IsKeyDown(Keys.A))
+                    cameraYaw -= cameraRotateSpeed * milliseconds;
+                else if (keyboard.IsKeyDown(Keys.D))
+                    cameraYaw += cameraRotateSpeed * milliseconds;
 
-			// Camera X rotation - W and S
-			if (keyboard.IsKeyDown(Keys.W) && cameraPitch > minPitch)
-				cameraPitch -= cameraRotateSpeed * milliseconds;
-			else if (keyboard.IsKeyDown(Keys.S) && cameraPitch < maxPitch)
-				cameraPitch += cameraRotateSpeed * milliseconds;
+                // Camera X rotation - W and S
+                if (keyboard.IsKeyDown(Keys.W) && cameraPitch > minPitch)
+                    cameraPitch -= cameraRotateSpeed * milliseconds;
+                else if (keyboard.IsKeyDown(Keys.S) && cameraPitch < maxPitch)
+                    cameraPitch += cameraRotateSpeed * milliseconds;
 
-			Vector3 player1Velocity = Vector3.Zero;
+                Vector3 player1Velocity = Vector3.Zero;
 
-			// Player 1 X movement - Right and Left arrow keys
-			if (keyboard.IsKeyDown(Keys.Right) && player1.Position.X < boundingBoxScale.X - player1.Scale.X)
-				player1Velocity.X = 1;
-			else if (keyboard.IsKeyDown(Keys.Left) && player1.Position.X > -boundingBoxScale.X + player1.Scale.X)
-				player1Velocity.X = -1;
+                // Player 1 X movement - Right and Left arrow keys
+                if (keyboard.IsKeyDown(Keys.Right) && player1.Position.X < boundingBoxScale.X - player1.Scale.X)
+                    player1Velocity.X = 1;
+                else if (keyboard.IsKeyDown(Keys.Left) && player1.Position.X > -boundingBoxScale.X + player1.Scale.X)
+                    player1Velocity.X = -1;
 
-			// Player 1 Y movement - Up and Down arrow keys
-			if (keyboard.IsKeyDown(Keys.Up) && player1.Position.Y < boundingBoxScale.Y - player1.Scale.Y)
-				player1Velocity.Y = 1;
-			else if (keyboard.IsKeyDown(Keys.Down) && player1.Position.Y > -boundingBoxScale.Y + player1.Scale.Y)
-				player1Velocity.Y = -1;
-			
-			float timePassed = milliseconds / 1000;
+                // Player 1 Y movement - Up and Down arrow keys
+                if (keyboard.IsKeyDown(Keys.Up) && player1.Position.Y < boundingBoxScale.Y - player1.Scale.Y)
+                    player1Velocity.Y = 1;
+                else if (keyboard.IsKeyDown(Keys.Down) && player1.Position.Y > -boundingBoxScale.Y + player1.Scale.Y)
+                    player1Velocity.Y = -1;
 
-			if (player1Velocity != Vector3.Zero)
-				player1Velocity = Vector3.Normalize(player1Velocity);
+                float timePassed = milliseconds / 1000;
 
-			player1.Velocity = player1Velocity * humanSpeed;
-			player1.Update(timePassed);
+                if (player1Velocity != Vector3.Zero)
+                    player1Velocity = Vector3.Normalize(player1Velocity);
 
-			bool hitPaddle = UpdateBall(timePassed);
+                player1.Velocity = player1Velocity * humanSpeed;
+                player1.Update(timePassed);
 
-			if (hitPaddle)
-				checkBallBounds();
+                bool hitPaddle = UpdateBall(timePassed);
 
-			if (ball.Velocity.Z < 0)
-				updateAI(timePassed);
+                if (hitPaddle)
+                    checkBallBounds();
 
-			base.Update(gameTime);
+                if (ball.Velocity.Z < 0)
+                    updateAI(timePassed);
+            }
+
+            else if (keyboard.IsKeyDown(Keys.Enter))
+            {
+                pauseGame = false;
+                player1Score = player2Score = 0;
+            }
+
+            if (keyboard.IsKeyDown(Keys.Escape))
+                Exit();
+
+            base.Update(gameTime);
 		}
 
 		private bool UpdateBall(float timePassed)
 		{
 			ball.Update(timePassed);
 
-			// If ball is at the Z bounds of the box at the side with player 1
-			if (ball.Position.Z > boundingBoxScale.Z - Ball.radius)
-				return checkPlayer(player1);
+            // If ball is at the Z bounds of the box at the side with player 1
+            if (ball.Position.Z > boundingBoxScale.Z - Ball.radius)
+            {
+                bool hit = checkPlayer(player1);
+                if (!hit)
+                    player2Score += 1;
+                return hit;
+            }
 
 			// If ball is at the Z bounds of the box at the side with player 2
 			if (ball.Position.Z < -boundingBoxScale.Z + Ball.radius)
-				return checkPlayer(player2);
+            {
+                bool hit = checkPlayer(player2);
+                if (!hit)
+                    player1Score += 1;
+                return hit;
+            }
 
-			if (ball.Position.X > boundingBoxScale.X - Ball.radius || ball.Position.X < -boundingBoxScale.X + Ball.radius)
+            if (ball.Position.X > boundingBoxScale.X - Ball.radius || ball.Position.X < -boundingBoxScale.X + Ball.radius)
 				ball.BounceX();
 
 			if (ball.Position.Y > boundingBoxScale.Y - Ball.radius || ball.Position.Y < -boundingBoxScale.Y + Ball.radius)
@@ -347,16 +371,6 @@ namespace Project3
 		{
 			Vector3 offset = Vector3.Zero;
 
-			if (tempPosition.X > 0)
-				offset.X = 1;
-			else if (tempPosition.X < 0)
-				offset.X = -1;
-
-			if (tempPosition.Y > 0)
-				offset.Y = 1;
-			else if (tempPosition.Y < 0)
-				offset.Y = -1;
-
 			if (tempPosition.Z > 0)
 				offset.Z = 1;
 			else if (tempPosition.Z < 0)
@@ -405,13 +419,16 @@ namespace Project3
 			Matrix projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
             // Set VertexBuffer and IndexBuffer for SkyBox and Paddles
 
 			foreach (Shape shape in shapes)
 				shape.Draw(cameraPosition, projection);
 
-			boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale);
+            GraphicsDevice.BlendState = BlendState.Opaque;
+
+            boundingBoxEffect.World = Matrix.CreateScale(boundingBoxScale);
 			boundingBoxEffect.View = view;
 			boundingBoxEffect.Projection = projection;
 
@@ -476,11 +493,31 @@ namespace Project3
             score.Clear();
             score.Append("Computer Score: ");
             score.Append(player2Score).AppendLine();
-            spriteBatch.DrawString(font, score.ToString(), new Vector2(16, 16), Color.White);
+            spriteBatch.DrawString(font, score.ToString(), new Vector2(600, 16), Color.White);
+
+            // do win-lose conditions
+            checkWin();
 
             spriteBatch.End();
 
             base.Draw(gameTime);
 		}
+
+        public void checkWin()
+        {
+            if (player1Score > 2 && !pauseGame)
+            {
+                spriteBatch.DrawString(font, "You Win!", new Vector2(300, 300), Color.White);
+                MediaPlayer.Play(winSong);
+                pauseGame = true;
+            }
+            if (player2Score > 2 && !pauseGame)
+            {
+                spriteBatch.DrawString(font, "You Lose!", new Vector2(300, 300), Color.White);
+                MediaPlayer.Stop();
+                loseSong.Play();
+                pauseGame = true;
+            }
+        }
     }
 }
