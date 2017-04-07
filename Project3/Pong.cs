@@ -420,6 +420,7 @@ namespace Project3
 				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 1);
 			}
             
+            // Draw the scores for the human and computer players
             spriteBatch = new SpriteBatch(GraphicsDevice);
             spriteBatch.Begin();
             var score = new StringBuilder();
@@ -436,8 +437,6 @@ namespace Project3
             checkWin();
 
             spriteBatch.End();
-
-            
 
             base.Draw(gameTime);
 		}
