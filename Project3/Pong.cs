@@ -54,7 +54,8 @@ namespace Project3
         private Song backgroundSong;
         private Song winSong;
         private Song loseSong;
-        private SpriteFont font;
+        private SpriteFont scoreFont;
+        private SpriteFont conditionFont;
         int player1Score = 0;
         int player2Score = 0;
         bool pauseGame = false;
@@ -127,7 +128,8 @@ namespace Project3
             player1Texture = Content.Load<Texture2D>("player1Paddle");
             player2Texture = Content.Load<Texture2D>("player2Paddle");
             helperTexture = Content.Load<Texture2D>("shadow");
-            font = Content.Load<SpriteFont>("Arial");
+            scoreFont = Content.Load<SpriteFont>("Arial16");
+            conditionFont = Content.Load<SpriteFont>("Arial30");
 
             ballBounce = Content.Load<SoundEffect>("blip");
 
@@ -432,12 +434,12 @@ namespace Project3
             
             score.Append("Human Score: ");
             score.Append(player1Score).AppendLine();
-            spriteBatch.DrawString(font, score.ToString(), new Vector2(16, 16), Color.White);
+            spriteBatch.DrawString(scoreFont, score.ToString(), new Vector2(16, 16), Color.White);
 
             score.Clear();
             score.Append("Computer Score: ");
             score.Append(player2Score).AppendLine();
-            spriteBatch.DrawString(font, score.ToString(), new Vector2(500, 16), Color.White);
+            spriteBatch.DrawString(scoreFont, score.ToString(), new Vector2(500, 16), Color.White);
 
             checkWin();
 
@@ -450,7 +452,7 @@ namespace Project3
         {
             if (player1Score > 2)
             {
-                spriteBatch.DrawString(font, "You Win!", new Vector2(300, 300), Color.White);
+                spriteBatch.DrawString(conditionFont, "You Win!", new Vector2(300, 300), Color.White);
                 if (!pauseGame)
                 {
                     MediaPlayer.Stop();
@@ -460,7 +462,7 @@ namespace Project3
             }
             if (player2Score > 2)
             {
-                spriteBatch.DrawString(font, "You Lose!", new Vector2(300, 300), Color.White);
+                spriteBatch.DrawString(conditionFont, "You Lose!", new Vector2(300, 300), Color.White);
                 if (!pauseGame)
                 {
                     MediaPlayer.Stop();
