@@ -10,32 +10,33 @@ namespace Project3
 {
     class SkyBox : Shape
     {
+		public new Effect Effect { get; private set; }
+
 		private TextureCube texture;
 
-		public SkyBox(Effect effect, Vector3 position, int scale, TextureCube texture) : base(effect, position, scale)
+		public SkyBox(GraphicsDevice device, Vector3 position, int scale, TextureCube texture, Effect effect) : base(device, position, scale)
 		{
 			this.texture = texture;
+			Effect = effect;
 		}
 
-		public override void Draw(Effect effect, Vector3 cameraPosition, Matrix projection)
+		public override void Draw(Vector3 cameraPosition, Matrix projection)
 		{
-			GraphicsDevice device = effect.GraphicsDevice;
-
 			Matrix world = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Position);
 			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
 
-			effect.Parameters["World"].SetValue(world);
-			effect.Parameters["View"].SetValue(view);
-			effect.Parameters["Projection"].SetValue(projection);
-			effect.Parameters["CameraPosition"].SetValue(Position);
-			effect.Parameters["SkyBoxTexture"].SetValue(texture);
+			Effect.Parameters["World"].SetValue(world);
+			Effect.Parameters["View"].SetValue(view);
+			Effect.Parameters["Projection"].SetValue(projection);
+			Effect.Parameters["CameraPosition"].SetValue(Position);
+			Effect.Parameters["SkyBoxTexture"].SetValue(texture);
 
-			device.RasterizerState = RasterizerState.CullClockwise;
+			GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
 
-			foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+			foreach (EffectPass pass in Effect.CurrentTechnique.Passes)
 			{
 				pass.Apply();
-				device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
+				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
 			}
 		}
 	}

@@ -10,8 +10,6 @@ namespace Project3
 {
     class Box : Shape
     {
-        private new BasicEffect Effect { get; }
-
 		private Vector3 velocity;
 		public Vector3 Velocity {
 			get { return velocity; }
@@ -19,7 +17,6 @@ namespace Project3
 		}
 
 		public Color Color { get; }
-        public Texture2D Texture { get; }
         float alphaChange; // For visibility of paddle when in front of the ball
 
         Vector3 front = new Vector3(0, 0, 20);
@@ -29,11 +26,11 @@ namespace Project3
         Vector3 top = new Vector3(0, 10, 0);
         Vector3 bottom = new Vector3(0, -10, 0);
 
-        public Box(BasicEffect effect, Vector3 position, Vector3 scale, Color color, Texture2D texture) : base(effect, position, scale)
+        public Box(GraphicsDevice device, Vector3 position, Vector3 scale, Color color) : base(device, position, scale)
         {
 			velocity = Vector3.Zero;
 			Color = color;
-            Texture = texture;
+			Effect = new BasicEffect(GraphicsDevice);
 		}
 
 		public override void Update(float timePassed)
@@ -131,30 +128,24 @@ namespace Project3
 			return true;
 		}
 
-		public override void Draw(BasicEffect effect, Vector3 cameraPosition, Matrix projection)
+		public override void Draw(Vector3 cameraPosition, Matrix projection)
 		{
-			GraphicsDevice device = effect.GraphicsDevice;
-
-            Matrix world = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Position);
+			Matrix world = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Position);
 			Matrix view = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
 
-			effect.World = world;
-			effect.View = view;
-			effect.Projection = projection;
-			effect.EnableDefaultLighting();
-			effect.DiffuseColor = Color.ToVector3();
-            effect.Texture = Texture;
-            effect.TextureEnabled = true;
+			Effect.World = world;
+			Effect.View = view;
+			Effect.Projection = projection;
+			Effect.EnableDefaultLighting();
+			Effect.DiffuseColor = Color.ToVector3();
 
-			device.RasterizerState = RasterizerState.CullCounterClockwise;
+			GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
-			foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+			foreach (EffectPass pass in Effect.CurrentTechnique.Passes)
 			{
 				pass.Apply();
-				device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
+				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
 			}
-
-            effect.TextureEnabled = false;
-        }
+		}
 	}
 }

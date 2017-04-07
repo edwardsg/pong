@@ -12,8 +12,6 @@ namespace Project3
 {
     class Ball : Shape
     {
-		private new BasicEffect Effect { get; }
-
 		private Vector3 velocity;
 		public Vector3 Velocity {
 			get { return velocity; }
@@ -28,13 +26,13 @@ namespace Project3
 
 		public const float radius = 1;
 
-        public Ball(BasicEffect effect, Vector3 position, Vector3 velocity, Color color, SoundEffect sound) : base(effect, position)
+        public Ball(GraphicsDevice device, Vector3 position, Vector3 velocity, Color color, SoundEffect sound) : base(device, position)
         {
-			Effect = effect;
 			Color = color;
 			this.velocity = velocity;
-			sphere = new SpherePrimitive(effect.GraphicsDevice);
+			sphere = new SpherePrimitive(GraphicsDevice);
             Sound = sound;
+			Effect = new BasicEffect(GraphicsDevice);
         }
 
 		public override void Update(float timePassed)
@@ -59,18 +57,18 @@ namespace Project3
             Sound.Play();
 		}
 
-		public override void Draw(BasicEffect effect, Vector3 cameraPosition, Matrix projection)
+		public override void Draw(Vector3 cameraPosition, Matrix projection)
 		{
-			effect.World = Matrix.CreateTranslation(Position);
-			effect.View = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
-			effect.Projection = projection;
-			effect.EnableDefaultLighting();
-			effect.DiffuseColor = Color.ToVector3();
+			Effect.World = Matrix.CreateTranslation(Position);
+			Effect.View = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
+			Effect.Projection = projection;
+			Effect.EnableDefaultLighting();
+			Effect.DiffuseColor = Color.ToVector3();
 
-			foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+			foreach (EffectPass pass in Effect.CurrentTechnique.Passes)
 			{
 				pass.Apply();
-				sphere.Draw(effect);
+				sphere.Draw(Effect);
 			}
 		}
     }
