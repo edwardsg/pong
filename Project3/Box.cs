@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Project3
 {
+	// General class describing any box shaped object
     abstract class Box : Shape
     {
 		protected VertexBuffer VertexBuffer { get; set; }
@@ -10,7 +11,7 @@ namespace Project3
 
         public Box(GraphicsDevice device, Vector3 position, Vector3 scale) : base(device, position, scale)
 		{
-			// Cube data - four vertices for each face, put into index buffer as 12 triangles
+			// Data for a unit cube - four vertices for each face, put into index buffer as 12 triangles
 			VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[24]
 			{
 				// Right

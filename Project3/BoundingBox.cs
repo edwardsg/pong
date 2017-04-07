@@ -8,13 +8,18 @@ using System.Threading.Tasks;
 
 namespace Project3
 {
+	// Box with outlines which holds the paddles and ball
 	class BoundingBox : Box
 	{
+		private Color Color { get; set; }
+
 		private VertexBuffer linesVertexBuffer;
 		private IndexBuffer linesIndexBuffer;
 
-		public BoundingBox(GraphicsDevice device, Vector3 position, Vector3 scale) : base(device, position, scale)
+		public BoundingBox(GraphicsDevice device, Vector3 position, Vector3 scale, Color color) : base(device, position, scale)
 		{
+			Color = color;
+
 			// Vertices for creating lines of bounding box
 			VertexPosition[] boundingBox = new VertexPosition[8]
 			{
@@ -57,14 +62,14 @@ namespace Project3
 			Effect.LightingEnabled = true;
 			Effect.DirectionalLight0.Enabled = true;
 			Effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(1, 1, 1));
-			Effect.DirectionalLight0.DiffuseColor = Color.MediumVioletRed.ToVector3();
+			Effect.DirectionalLight0.DiffuseColor = Color.ToVector3();
 			Effect.DirectionalLight0.SpecularColor = Color.White.ToVector3();
 			Effect.DirectionalLight1.Enabled = true;
 			Effect.DirectionalLight1.Direction = Vector3.Normalize(new Vector3(-1, -1, -1));
-			Effect.DirectionalLight1.DiffuseColor = Color.MediumVioletRed.ToVector3();
+			Effect.DirectionalLight1.DiffuseColor = Color.ToVector3();
 			Effect.DirectionalLight1.SpecularColor = Color.White.ToVector3();
 
-			// To only see background faces
+			// Show through front faces to only see back faces
 			GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
 
 			GraphicsDevice.SetVertexBuffer(VertexBuffer);

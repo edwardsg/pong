@@ -1,13 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Project3
 {
+	// Crosshair and surrounding square showing where the ball is
 	class Crosshair : Shape
 	{
 		private Color Color { get; set; }
@@ -23,7 +19,7 @@ namespace Project3
 		{
 			Color = color;
 
-			// Vertices for creating crosshair lines
+			// Setting up buffers - for crossing lines
 			VertexPositionColor[] vertices = new VertexPositionColor[4]
 			{
 				new VertexPositionColor(new Vector3(-1, 0, 0), Color),
@@ -44,6 +40,7 @@ namespace Project3
 			IndexBufferV = new IndexBuffer(GraphicsDevice, typeof(short), indicesV.Length, BufferUsage.WriteOnly);
 			IndexBufferV.SetData(indicesV);
 
+			// For outer square
 			VertexPositionColor[] squareVertices = new VertexPositionColor[4]
 			{
 				new VertexPositionColor(new Vector3(-1, 1, 0), Color),
@@ -64,9 +61,11 @@ namespace Project3
 		public override void Draw(Vector3 cameraPosition, Matrix projection)
 		{
 			GraphicsDevice.SetVertexBuffer(VertexBuffer);
+
+			// Allow colored lines
 			Effect.VertexColorEnabled = true;
 
-			// Horizontal
+			// Draw horizontal line
 			Effect.World = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(0, Position.Y, Position.Z);
 			Effect.View = Matrix.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.Up);
 			Effect.Projection = projection;
@@ -78,7 +77,7 @@ namespace Project3
 				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 1);
 			}
 
-			// Vertical
+			// Draw vertical line
 			Effect.World = Matrix.CreateScale(Scale) * Matrix.CreateTranslation(Position.X, 0, Position.Z);
 			GraphicsDevice.Indices = IndexBufferV;
 
@@ -88,7 +87,7 @@ namespace Project3
 				GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, 1);
 			}
 
-			// Square
+			// Draw square
 			Effect.World = Matrix.CreateScale(Scale.X - .1f, Scale.Y - .1f, Scale.Z - .1f) * Matrix.CreateTranslation(0, 0, Position.Z);
 			GraphicsDevice.SetVertexBuffer(SquareVertexBuffer);
 			GraphicsDevice.Indices = SquareIndexBuffer;

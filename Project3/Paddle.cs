@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Project3
 {
+	// Box with a texture, color, and velocity
 	class Paddle : Box
 	{
 		private Vector3 velocity;
@@ -14,8 +15,6 @@ namespace Project3
 
 		public Color Color { get; }
 		public Texture2D Texture { get; }
-
-		float alphaChange; // For visibility of paddle when in front of the ball
 
 		Vector3 front = new Vector3(0, 0, 20);
 		Vector3 back = new Vector3(0, 0, -20);
@@ -128,6 +127,7 @@ namespace Project3
 
 		public override void Draw(Vector3 cameraPosition, Matrix projection)
 		{
+			// Use BasicEffect to draw textured box
 			GraphicsDevice.SetVertexBuffer(VertexBuffer);
 			GraphicsDevice.Indices = IndexBuffer;
 

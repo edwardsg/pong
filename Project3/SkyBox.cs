@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Project3
 {
+	// Box with a TextureCube and an Effect instead of BasicEffect
     class SkyBox : Box
     {
 		public new Effect Effect { get; private set; }
@@ -17,6 +18,7 @@ namespace Project3
 
 		public override void Draw(Vector3 cameraPosition, Matrix projection)
 		{
+			// Use skybox effect to render skybox on cube
 			GraphicsDevice.SetVertexBuffer(VertexBuffer);
 			GraphicsDevice.Indices = IndexBuffer;
 
