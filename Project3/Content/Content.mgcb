@@ -139,3 +139,9 @@
 /processorParam:TextureFormat=Compressed
 /build:Arial30.spritefont
 
+#begin vgafix.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:TextureFormat=Compressed
+/build:vgafix.spritefont
+

@@ -320,6 +320,8 @@ namespace Project3
 			Vector3 offset = vectorFromSigns(tempPosition);
 			tempPosition.Z = offset.Z * boundingBoxScale.Z + .1f;
 
+            Vector3.Clamp(tempPosition, -boundingBoxScale, boundingBoxScale);
+
 			hitHelper.Position = tempPosition;
 		}
 
