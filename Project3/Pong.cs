@@ -27,7 +27,7 @@ namespace Project3
 
 		private Vector3 boundingBoxScale = new Vector3(10, 10, 20);
 		private Vector3 paddleScale = new Vector3(1, 1, .2f);
-		private Vector3 helperScale = new Vector3(1, 1, .05f);
+		private Vector3 helperScale = new Vector3(1, 1, 0);
 
 		// Camera distance from origin, rotation speed
 		private const float cameraDistance = 50;
@@ -136,7 +136,7 @@ namespace Project3
             ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.White, ballBounce);
 			player1 = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.White, player1Texture);
 			player2 = new Paddle(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.White, player2Texture);
-			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.White, helperTexture);
+			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), helperScale, Color.Green, helperTexture);
 
             shapes = new Shape[6] { skyBox, boundingBox, ball, player1, player2, hitHelper };			
 
@@ -168,7 +168,9 @@ namespace Project3
 		/// </summary>
 		protected override void UnloadContent()
 		{
-
+			crosshairVertexBuffer.Dispose();
+			crosshairHIndexBuffer.Dispose();
+			crosshairVIndexBuffer.Dispose();
 		}
 
 		/// <summary>
@@ -337,7 +339,7 @@ namespace Project3
 		}
 
 		// Used to get the signs of the position vector for the hitHelper to offset it properly
-		public Vector3 vectorFromSigns(Vector3 tempPosition)
+		private Vector3 vectorFromSigns(Vector3 tempPosition)
 		{
 			Vector3 offset = Vector3.Zero;
 
@@ -377,8 +379,8 @@ namespace Project3
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Draw(GameTime gameTime)
 		{
-            GraphicsDevice.BlendState = BlendState.Opaque;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
             // Rotate camera around origin
             Matrix rotation = Matrix.CreateFromYawPitchRoll(cameraYaw, cameraPitch, 0);
 			cameraPosition = Vector3.Transform(Vector3.Backward * 1f, rotation); //was 1.5f, but I changed it for debugging purposes
@@ -389,6 +391,9 @@ namespace Project3
 			Matrix projection = Matrix.CreatePerspectiveFieldOfView(viewAngle, GraphicsDevice.Viewport.AspectRatio, nearPlane, farPlane);
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
+
+			// Make sure spot texture has transparent background
+			GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
 			// Render all game objects
 			foreach (Shape shape in shapes)
