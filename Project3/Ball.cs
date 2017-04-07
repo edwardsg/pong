@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Primitives;
+using Microsoft.Xna.Framework.Audio;
 
 namespace Project3
 {
@@ -20,14 +21,17 @@ namespace Project3
 
         private SpherePrimitive sphere;
 
+        private SoundEffect Sound { get; }
+
 		public float radius = 1;
 
-        public Ball(BasicEffect effect, Vector3 position, Vector3 velocity, Color color) : base(effect, position)
+        public Ball(BasicEffect effect, Vector3 position, Vector3 velocity, Color color, SoundEffect sound) : base(effect, position)
         {
 			Effect = effect;
 			Color = color;
 			this.velocity = velocity;
 			sphere = new SpherePrimitive(effect.GraphicsDevice);
+            Sound = sound;
         }
 
         public void setVelocity(Vector3 update)
@@ -38,11 +42,13 @@ namespace Project3
 		public void BounceX()
 		{
 			velocity.X *= -1;
+            Sound.Play();
 		}
 
 		public void BounceY()
 		{
 			velocity.Y *= -1;
+            Sound.Play();
 		}
 
         public bool checkPlayer(Vector3 playerPosition, Box helper)
@@ -59,6 +65,7 @@ namespace Project3
 				velocity.Normalize();
 				velocity *= 1;
 				velocity.Z *= -1;
+                Sound.Play();
 
 				return true;
 			}

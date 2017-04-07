@@ -55,3 +55,15 @@
 /processorParam:TextureFormat=Compressed
 /build:Islands.dds
 
+#begin blip.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:blip.wav
+
+#begin kickshock.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:kickshock.mp3
+

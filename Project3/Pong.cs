@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 using Primitives;
 
 namespace Project3
@@ -33,6 +35,9 @@ namespace Project3
 		public float maxPitch = MathHelper.PiOver2 - 0.3f;
 
 		private Vector3 boundingBoxScale = new Vector3(10, 10, 20);
+
+        private SoundEffect ballBounce;
+        private Song backgroundSong;
 
         // Player position changes
         float player1Y = 0;
@@ -127,13 +132,19 @@ namespace Project3
             skyBoxTexture = Content.Load<TextureCube>("Islands");
             boundingBoxEffect = new BasicEffect(GraphicsDevice);
 
-			ball = new Ball(basicEffect, Vector3.Zero, Vector3.UnitZ, Color.Purple);
+            ballBounce = Content.Load<SoundEffect>("blip");
+
+            ball = new Ball(basicEffect, Vector3.Zero, Vector3.UnitZ, Color.Purple, ballBounce);
 			skyBox = new SkyBox(skyBoxEffect, Vector3.Zero, 200, skyBoxTexture);
 			player1 = new Box(basicEffect, new Vector3(0, 0, 20), new Vector3(1, 1, 0.2f), Color.Green);
 			player2 = new Box(basicEffect, new Vector3(0, 0, -20), new Vector3(1, 1, 0.2f), Color.Yellow);
 			hitHelper = new Box(basicEffect, new Vector3(0, 0, 20), new Vector3(1, 1, 0.001f), Color.Red);
+            
+            backgroundSong = Content.Load<Song>("kickshock");
+            MediaPlayer.Play(backgroundSong);
+            MediaPlayer.IsRepeating = true;
 
-			shapes = new Shape[5] { ball, skyBox, player1, player2, hitHelper };
+            shapes = new Shape[5] { ball, skyBox, player1, player2, hitHelper };
 
 			// Cube data - four vertices for each face, put into index buffer as 12 triangles
 			VertexPositionNormalTexture[] cubeVertices = new VertexPositionNormalTexture[24]
