@@ -115,7 +115,7 @@ namespace Project3
 			graphics.ApplyChanges();
 
 			// Set window title
-			Window.Title = "Space Cadet 3D Ping Pong";
+			Window.Title = "Space Cadet 3D Ping Pong (Press F for fullscreen)";
 
 			base.Initialize();
 		}
@@ -129,11 +129,11 @@ namespace Project3
 			// Create a new SpriteBatch, which can be used to draw textures.
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            Song winSong = Content.Load<Song>("moveforward");
-            Song loseSong = Content.Load<Song>("sendforthehorses");
+            winSong = Content.Load<Song>("moveforward");
+            loseSong = Content.Load<Song>("sendforthehorses");
 
 			// BGM
-            Song backgroundSong = Content.Load<Song>("kickshock");
+            backgroundSong = Content.Load<Song>("kickshock");
             MediaPlayer.Play(backgroundSong);
             MediaPlayer.IsRepeating = true;
 
@@ -150,12 +150,12 @@ namespace Project3
             ballBounce = Content.Load<SoundEffect>("blip");
 
 			skyBox = new SkyBox(GraphicsDevice, Vector3.Zero, 200, skyBoxTexture, skyBoxEffect);
-			boundingBox = new BoundingBox(GraphicsDevice, Vector3.Zero, boundingBoxScale, Color.MediumVioletRed);
-            ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.Blue, ballBounce);
+			boundingBox = new BoundingBox(GraphicsDevice, Vector3.Zero, boundingBoxScale, Color.MidnightBlue);
+            ball = new Ball(GraphicsDevice, Vector3.Zero, Vector3.UnitZ * ballSpeed, Color.OrangeRed, ballBounce);
 			crosshair = new Crosshair(GraphicsDevice, ball.Position, boundingBoxScale, Color.White);
 			player1 = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z), paddleScale, Color.Yellow, player1Texture);
 			player2 = new Paddle(GraphicsDevice, new Vector3(0, 0, -boundingBoxScale.Z), paddleScale, Color.Coral, player2Texture);
-			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z + .1f), helperScale, Color.Green, helperTexture);
+			hitHelper = new Paddle(GraphicsDevice, new Vector3(0, 0, boundingBoxScale.Z + .1f), helperScale, Color.Black, helperTexture);
 
 			// Single array for all objects
             shapes = new Shape[7] { skyBox, boundingBox, crosshair, ball, player1, player2, hitHelper };			

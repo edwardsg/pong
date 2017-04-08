@@ -1,0 +1,12 @@
+Gabriel Edwards and Shaelyn Divins
+CS361 Computer Graphics Project 3 - 3D Pong
+Dr. Barry Wittman
+2017-04-07
+
+Features:
+	- Crosshairs showing the ball's position along with a surrounding square to help with depth
+	- A serene and meditative skybox texture
+	- Background jams
+	- Bouncy sounds
+	- Helper shadow showing where ball will hit on each side
+	- Partially transparent bounding box
