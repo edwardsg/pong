@@ -70,7 +70,7 @@ namespace Project3
 		private Paddle player1, player2, hitHelper;
 		private Shape[] shapes;
 
-		// Game sounds
+		// Game sounds4
         private SoundEffect ballBounce;
         private Song backgroundSong;
         private Song winSong;
