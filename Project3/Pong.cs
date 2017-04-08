@@ -194,7 +194,7 @@ namespace Project3
                 if (fPressed == false)
                     fPressed = true;
 
-				// Change resolution depnding on mode
+				// Change resolution depending on mode
                 if (!graphics.IsFullScreen)
                 {
                     graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
@@ -261,6 +261,7 @@ namespace Project3
 				crosshair.Position = ball.Position;
             }
 
+            // To restart the game
             if (keyboard.IsKeyDown(Keys.Enter))
             {
                 gamePaused = false;
@@ -401,7 +402,7 @@ namespace Project3
 
             // Rotate camera around origin
             Matrix rotation = Matrix.CreateFromYawPitchRoll(cameraYaw, cameraPitch, 0);
-			cameraPosition = Vector3.Transform(Vector3.Backward * 1f, rotation); //was 1.5f, but I changed it for debugging purposes
+			cameraPosition = Vector3.Transform(Vector3.Backward * 1f, rotation);
 			cameraPosition *= cameraDistance;
 
 			// Set up camera direction, and perspective projection
